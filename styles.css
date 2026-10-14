@@ -605,6 +605,10 @@ input {
   margin: 28px auto 0;
 }
 
+#loadMoreGames[hidden] {
+  display: none;
+}
+
 .game-card .meta {
   display: flex;
   justify-content: space-between;

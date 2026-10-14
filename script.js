@@ -10,11 +10,14 @@ const providerFilter = document.getElementById('providerFilter');
 const labelFilter = document.getElementById('labelFilter');
 const categoryChips = document.getElementById('categoryChips');
 const apiStatus = document.getElementById('apiStatus');
+const loadMoreButton = document.getElementById('loadMoreGames');
 const gameTotal = document.getElementById('gameTotal');
 const availableTotal = document.getElementById('availableTotal');
 const featuredCards = document.querySelectorAll('[data-featured-game]');
 
+const GAME_BATCH_SIZE = 48;
 let games = [];
+let visibleGameCount = GAME_BATCH_SIZE;
 
 function escapeHTML(value) {
   return String(value).replace(/[&<>"']/g, (character) => ({
@@ -144,13 +147,14 @@ function renderFeaturedGames() {
 
 function renderGames() {
   const filteredGames = getFilteredGames();
+  const visibleGames = filteredGames.slice(0, visibleGameCount);
   categoryChips.querySelectorAll('[data-category]').forEach((chip) => {
     const isActive = chip.dataset.category === labelFilter.value;
     chip.classList.toggle('active', isActive);
     chip.setAttribute('aria-pressed', String(isActive));
   });
 
-  gameGrid.innerHTML = filteredGames.map((game) => `
+  gameGrid.innerHTML = visibleGames.map((game) => `
     <article class="game-card">
       <div class="game-card-art">
         ${game.image ? `<img class="game-art-image" src="${escapeHTML(game.image)}" alt="${escapeHTML(game.name)} oyun görseli" loading="lazy">` : ''}
@@ -174,7 +178,14 @@ function renderGames() {
     gameGrid.innerHTML = '<p class="empty-state">Seçimlerine uygun oyun bulunamadı.</p>';
   }
 
-  apiStatus.textContent = `${filteredGames.length.toLocaleString('tr-TR')} oyun gösteriliyor.`;
+  apiStatus.textContent = filteredGames.length > visibleGames.length
+    ? `${visibleGames.length.toLocaleString('tr-TR')} / ${filteredGames.length.toLocaleString('tr-TR')} oyun gösteriliyor.`
+    : `${filteredGames.length.toLocaleString('tr-TR')} oyun gösteriliyor.`;
+  loadMoreButton.hidden = visibleGames.length >= filteredGames.length;
+  if (!loadMoreButton.hidden) {
+    const remainingGames = filteredGames.length - visibleGames.length;
+    loadMoreButton.textContent = `Daha fazla oyun göster (${remainingGames.toLocaleString('tr-TR')} kaldı)`;
+  }
 }
 
 function openGamePlayer(gameId) {
@@ -264,14 +275,22 @@ async function loadGames() {
 }
 
 searchInput.addEventListener('input', () => {
+  visibleGameCount = GAME_BATCH_SIZE;
   renderGames();
 });
 
 providerFilter.addEventListener('change', () => {
+  visibleGameCount = GAME_BATCH_SIZE;
   renderGames();
 });
 
 labelFilter.addEventListener('change', () => {
+  visibleGameCount = GAME_BATCH_SIZE;
+  renderGames();
+});
+
+loadMoreButton.addEventListener('click', () => {
+  visibleGameCount += GAME_BATCH_SIZE;
   renderGames();
 });
 
@@ -280,6 +299,7 @@ categoryChips.addEventListener('click', (event) => {
   const chip = event.target.closest('[data-category]');
   if (!chip) return;
   labelFilter.value = chip.dataset.category;
+  visibleGameCount = GAME_BATCH_SIZE;
   renderGames();
 });
 

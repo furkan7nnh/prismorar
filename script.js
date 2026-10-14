@@ -1,7 +1,7 @@
 const SOURCE_URL = 'https://multiwin223.com/';
 const API_URL = new URL('/api/v2/games/pages/mirror/casino', SOURCE_URL);
 const GAME_LAUNCH_API_URL = new URL('/api/v1/games/launch-demo-mode/', SOURCE_URL);
-const CATALOG_URL = new URL('catalog.json?v=5', document.baseURI);
+const CATALOG_URL = new URL('catalog.json?v=6', document.baseURI);
 const CATALOG_CACHE_NAME = 'prismorar-catalog';
 const CATALOG_CACHE_VERSION = 1;
 const CATALOG_REFRESH_INTERVAL = 4 * 60 * 60 * 1000;
@@ -25,6 +25,8 @@ const DESKTOP_GAME_BATCH_SIZE = 48;
 const MOBILE_GAME_BATCH_SIZE = 12;
 let games = [];
 let labelNames = new Map();
+let catalogProviders = [];
+let catalogLabels = [];
 let visibleGameCount = getGameBatchSize();
 
 function getGameBatchSize() {
@@ -48,16 +50,6 @@ function getLocalizedName(value) {
   return value?.tr || value?.en || '';
 }
 
-function createFallbackArtwork(game) {
-  const colorIndex = [...game.name].reduce((sum, character) => sum + character.charCodeAt(0), 0) % 4;
-  return `<div class="game-art-fallback game-art-fallback-${colorIndex}" role="img" aria-label="${escapeHTML(game.name)} oyun görseli">
-    <span class="game-art-fallback-icon" aria-hidden="true">✦</span>
-    <span class="game-art-fallback-provider">${escapeHTML(game.provider)}</span>
-    <strong>${escapeHTML(game.name)}</strong>
-    <small>GÖKHAN BET</small>
-  </div>`;
-}
-
 function normalizeGame(record) {
   const name = record.custom_name || record.name;
   if (!record.id || !name || !record.provider_name) return null;
@@ -66,6 +58,8 @@ function normalizeGame(record) {
     || record.cover_image
     || record.custom_background_image
     || record.background_image;
+
+  if (!imagePath) return null;
 
   return {
     id: record.id,
@@ -185,7 +179,7 @@ function createCatalogData(data) {
             .map(({ slug }) => slug)
         };
       })
-      .filter((record) => record.id && record.name && record.provider_name)
+      .filter((record) => record.id && record.name && record.provider_name && record.cover_image)
   };
 }
 
@@ -313,18 +307,12 @@ function renderGames() {
   });
 
   gameGrid.innerHTML = visibleGames.map((game) => {
-    const hasGameArtwork = Boolean(game.image);
-    const imageSource = hasGameArtwork
-      ? new URL(game.image, SOURCE_URL).href
-      : '';
-    const artworkMarkup = hasGameArtwork
-      ? `<img class="game-art-image" src="${escapeHTML(imageSource)}" alt="${escapeHTML(game.name)} oyun görseli" data-game-id="${escapeHTML(game.id)}" loading="lazy" decoding="async">`
-      : createFallbackArtwork(game);
+    const imageSource = new URL(game.image, SOURCE_URL).href;
 
     return `
       <article class="game-card">
         <div class="game-card-art">
-          ${artworkMarkup}
+          <img class="game-art-image" src="${escapeHTML(imageSource)}" alt="${escapeHTML(game.name)} oyun görseli" data-game-id="${escapeHTML(game.id)}" loading="lazy" decoding="async">
           <span class="tag">${escapeHTML(labelNames.get(game.labels.find((label) => label.slug !== 'all')?.slug) || 'Casino')}</span>
         </div>
         <div class="game-card-content">
@@ -359,10 +347,11 @@ function renderGames() {
 gameGrid.addEventListener('error', (event) => {
   if (!(event.target instanceof HTMLImageElement) || !event.target.classList.contains('game-art-image')) return;
 
-  const game = games.find((item) => item.id === event.target.dataset.gameId);
-  if (!game) return;
-
-  event.target.outerHTML = createFallbackArtwork(game);
+  games = games.filter((game) => game.id !== event.target.dataset.gameId);
+  gameTotal.textContent = games.length.toLocaleString('tr-TR');
+  availableTotal.textContent = games.filter((game) => game.demoSupported).length.toLocaleString('tr-TR');
+  populateFilters(catalogProviders, catalogLabels);
+  renderGames();
 }, true);
 
 function openGamePlayer(gameId) {
@@ -417,7 +406,9 @@ function closeModal() {
 
 function displayCatalog(data) {
   games = data.games.map(normalizeGame).filter(Boolean);
-  populateFilters(data.providers || [], data.labels || []);
+  catalogProviders = data.providers || [];
+  catalogLabels = data.labels || [];
+  populateFilters(catalogProviders, catalogLabels);
   gameTotal.textContent = games.length.toLocaleString('tr-TR');
   availableTotal.textContent = games.filter((game) => game.demoSupported).length.toLocaleString('tr-TR');
   renderFeaturedGames();

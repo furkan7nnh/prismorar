@@ -276,24 +276,106 @@ input {
   gap: 16px;
 }
 
-.promo-grid {
-  display: grid;
-  grid-template-columns: 1.35fr 0.65fr;
-  gap: 16px;
-  margin: 30px 0 42px;
+.pricing {
+  margin: 28px 0 42px;
 }
 
-.promo-card {
+.section-heading {
+  margin-bottom: 18px;
+}
+
+.section-heading h2 {
+  margin: 8px 0 0;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  letter-spacing: -0.05em;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.pricing-card {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  min-height: 170px;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px 20px;
   border: 1px solid var(--line);
   border-radius: 22px;
-  padding: 24px;
-  background: var(--panel);
+  background: rgba(13, 24, 39, 0.8);
   box-shadow: var(--shadow);
+}
+
+.pricing-card.featured {
+  background: linear-gradient(180deg, rgba(107, 124, 255, 0.22), rgba(13, 24, 39, 0.9));
+  border-color: rgba(107, 124, 255, 0.5);
+  transform: translateY(-4px);
+}
+
+.pricing-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(94, 241, 207, 0.12);
+  border: 1px solid rgba(94, 241, 207, 0.25);
+  color: #d7fff7;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pricing-card h3 {
+  margin: 0;
+  font-size: 1.8rem;
+  letter-spacing: -0.04em;
+}
+
+.price-line {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+}
+
+.price-line strong {
+  font-size: clamp(2rem, 3vw, 2.7rem);
+  letter-spacing: -0.06em;
+}
+
+.price-line span {
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+
+.pricing-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: var(--muted);
+  display: grid;
+  gap: 10px;
+}
+
+.pricing-card li {
+  position: relative;
+  padding-left: 18px;
+}
+
+.pricing-card li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--primary-2);
+}
+
+.pricing-card .primary-btn,
+.pricing-card .secondary-btn {
+  width: 100%;
+  margin-top: auto;
 }
 
 .jackpot-card {
@@ -1141,12 +1223,12 @@ input {
     flex-wrap: wrap;
   }
 
-  .game-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .pricing-grid {
+    grid-template-columns: 1fr;
   }
 
-  .promo-grid {
-    grid-template-columns: 1fr;
+  .game-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

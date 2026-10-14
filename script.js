@@ -10,6 +10,7 @@ const categoryChips = document.getElementById('categoryChips');
 const apiStatus = document.getElementById('apiStatus');
 const gameTotal = document.getElementById('gameTotal');
 const availableTotal = document.getElementById('availableTotal');
+const featuredCards = document.querySelectorAll('[data-featured-game]');
 
 let games = [];
 
@@ -124,6 +125,21 @@ function getFilteredGames() {
   });
 }
 
+function renderFeaturedGames() {
+  featuredCards.forEach((card) => {
+    const featuredName = card.dataset.featuredGame.toLocaleLowerCase('tr');
+    const game = games.find((item) => item.name.toLocaleLowerCase('tr') === featuredName);
+    const image = card.querySelector('.showcase-art-image');
+    if (!game?.image) {
+      image.hidden = true;
+      return;
+    }
+
+    image.src = game.image;
+    image.alt = `${game.name} oyun görseli`;
+  });
+}
+
 function renderGames() {
   const filteredGames = getFilteredGames();
   categoryChips.querySelectorAll('[data-category]').forEach((chip) => {
@@ -209,6 +225,7 @@ async function loadGames() {
     populateFilters(data.providers || [], data.labels || []);
     gameTotal.textContent = games.length.toLocaleString('tr-TR');
     availableTotal.textContent = games.filter((game) => game.demoSupported).length.toLocaleString('tr-TR');
+    renderFeaturedGames();
     renderGames();
   } catch (error) {
     apiStatus.textContent = `Oyun listesi yüklenemedi: ${error.message}`;

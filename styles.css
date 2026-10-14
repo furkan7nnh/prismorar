@@ -352,6 +352,22 @@ input {
   box-shadow: var(--shadow);
 }
 
+.showcase-art-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  filter: brightness(0.68);
+  object-fit: cover;
+}
+
+.showcase-card > .tag,
+.showcase-card > h3,
+.showcase-card > p {
+  position: relative;
+  z-index: 1;
+}
+
 .showcase-card.large {
   grid-column: 1 / -1;
   min-height: 220px;
@@ -1136,12 +1152,16 @@ input {
 
   .game-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
+    gap: 6px;
+  }
+
+  .page-shell {
+    width: calc(100% - 16px);
   }
 
   .game-card-art {
     min-height: 0;
-    aspect-ratio: 3 / 4;
+    aspect-ratio: 2 / 3;
     padding: 6px;
   }
 

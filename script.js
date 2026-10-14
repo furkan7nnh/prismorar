@@ -39,6 +39,29 @@ const PAYMENT_METHODS = [
     description: 'Kısa süreli ve güvenli ödeme seçeneği.'
   }
 ];
+const PROFILE_MENU_ITEMS = [
+  { title: 'Detaylar', url: '/profile/details' },
+  { title: 'Güvenlik', url: 'profile/security' },
+  { title: 'Şifre Değiştir', url: 'profile/security/change-password' },
+  { title: 'Cihazlar', url: 'profile/security/devices' },
+  { title: 'KYC Doğrulaması', url: 'profile/security/kyc-verification' },
+  { title: 'Bankacılık', url: 'profile/financial' },
+  { title: 'Para Yatırma', url: 'profile/financial/deposit' },
+  { title: 'Para Çekme', url: 'profile/financial/withdrawal' },
+  { title: 'Ödeme Hesaplarım', url: 'profile/financial/my-payment-accounts' },
+  { title: 'Ödemeler', url: 'profile/payments' },
+  { title: 'Geçmiş', url: 'profile/history' },
+  { title: 'Teklifler', url: 'profile/offers' },
+  { title: 'Makbuz Gönder', url: 'profile/financial/send-receipt' },
+  { title: 'Oyun Oturumları', url: 'profile/gameplay-sessions' },
+  { title: 'Bildirimler', url: 'profile/notifications' },
+  { title: 'Bonus Promosyon Kodu', url: 'profile/bonus/promocode' },
+  { title: 'Sorumlu Bahis', url: 'profile/responsible-betting' },
+  { title: 'Çıkış Yap', url: 'profile/logout' },
+  { title: '2FA Doğrulaması', url: 'profile/security/2fa' },
+  { title: 'Arkadaş Davet Et', url: 'profile/invite-friends' },
+  { title: 'Arama Talep Et', url: 'profile/request-call' }
+];
 
 const gameGrid = document.getElementById('gameGrid');
 const modal = document.getElementById('gameModal');
@@ -348,6 +371,18 @@ function renderPaymentMethods() {
   }).join('');
 }
 
+function renderProfileMenu() {
+  const profileContainer = document.getElementById('profileMenu');
+  if (!profileContainer) return;
+
+  profileContainer.innerHTML = PROFILE_MENU_ITEMS.map((item) => `
+    <a class="profile-menu-item" href="${escapeHTML(item.url)}" target="_self">
+      <span>${escapeHTML(item.title)}</span>
+      <strong>›</strong>
+    </a>
+  `).join('');
+}
+
 function renderFeaturedGames() {
   featuredCards.forEach((card) => {
     const featuredName = card.dataset.featuredGame.toLocaleLowerCase('tr');
@@ -583,4 +618,5 @@ document.addEventListener('keydown', (event) => {
 });
 
 renderPaymentMethods();
+renderProfileMenu();
 loadGames().catch((error) => console.error('Oyun kataloğu yüklenemedi.', error));

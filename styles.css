@@ -350,11 +350,13 @@ input {
   line-height: 1.6;
 }
 
-.payment-methods {
+.payment-methods,
+.profile-menu-section {
   margin: 28px 0 42px;
 }
 
-.payment-grid {
+.payment-grid,
+.profile-menu-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 18px;
@@ -420,6 +422,35 @@ input {
   margin-top: auto;
   color: var(--muted);
   font-size: 0.8rem;
+}
+
+.profile-menu-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.profile-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  text-decoration: none;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.profile-menu-item:hover,
+.profile-menu-item:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(107, 124, 255, 0.5);
+}
+
+.profile-menu-item strong {
+  color: var(--primary-2);
+  font-size: 1.3rem;
 }
 
 .pricing {
@@ -1375,6 +1406,7 @@ input {
 
   .bonus-grid,
   .payment-grid,
+  .profile-menu-grid,
   .pricing-grid {
     grid-template-columns: 1fr;
   }

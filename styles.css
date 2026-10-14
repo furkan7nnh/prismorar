@@ -1134,9 +1134,68 @@ input {
     text-align: left;
   }
 
-  .game-grid,
-  .modal-grid {
-    grid-template-columns: 1fr;
+  .game-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .game-card-art {
+    min-height: 0;
+    aspect-ratio: 3 / 4;
+    padding: 6px;
+  }
+
+  .game-card-art .tag {
+    max-width: 100%;
+    padding: 4px 6px;
+    overflow: hidden;
+    font-size: 0.58rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .game-card-content {
+    padding: 8px 6px;
+  }
+
+  .game-card .meta {
+    margin-top: 0;
+  }
+
+  .game-card .meta .badge:nth-child(2),
+  .source-game-id {
+    display: none;
+  }
+
+  .game-card .badge {
+    max-width: 100%;
+    padding: 4px 6px;
+    overflow: hidden;
+    font-size: 0.58rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .game-card h3 {
+    display: -webkit-box;
+    margin: 6px 0;
+    overflow: hidden;
+    font-size: 0.72rem;
+    line-height: 1.3;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .game-card-footer {
+    display: block;
+  }
+
+  .game-card .play-btn {
+    width: 100%;
+    padding: 6px 2px;
+    border-radius: 8px;
+    font-size: 0.6rem;
+    line-height: 1.2;
   }
 
   .toolbar {

@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=14" />
+    <link rel="stylesheet" href="styles.css?v=15" />
     <style>
       .brand-portrait {
         display: block;
@@ -39,12 +39,96 @@
           <a href="#home" data-show-view="home">Anasayfa</a>
           <a href="#games">Oyunlar</a>
           <a href="profile/">Profil</a>
+          <a class="home-auth-link" href="login.html#login">Giriş yap</a>
+          <a class="home-auth-link register" href="login.html#register">Kayıt ol</a>
         </nav>
 
       </header>
 
       <main>
         <div class="page-view home-view">
+          <section class="home-promo-banner" aria-labelledby="homePromoTitle">
+            <div class="home-promo-copy">
+              <span class="home-promo-kicker">GÖKHAN BET OYUN MERKEZİ</span>
+              <h2 id="homePromoTitle">Oyun keyfi,<br /><span>tek bir yerde.</span></h2>
+              <p>Kataloğu keşfet, sevdiğin oyunu kolayca bul.</p>
+              <a class="home-promo-button" href="#games">Oyunları keşfet <span aria-hidden="true">›</span></a>
+            </div>
+            <div class="home-promo-art" aria-hidden="true">
+              <span class="promo-orbit promo-orbit-one"></span>
+              <span class="promo-orbit promo-orbit-two"></span>
+              <img src="assets/gokhan-bet.jpg?v=3" alt="" />
+              <span class="promo-art-mark">GB</span>
+            </div>
+          </section>
+
+          <nav class="home-category-nav" aria-label="Oyun bölümleri">
+            <a class="is-active" href="#home">⌂ <span>Ana Sayfa</span></a>
+            <a href="#newGames">✦ <span>Yeni Oyunlar</span></a>
+            <a href="#popularGames">♛ <span>Popüler</span></a>
+            <a href="#games">▦ <span>Tüm Oyunlar</span></a>
+          </nav>
+          <div id="categoryChips" class="category-chips home-category-chips" aria-label="Oyun kategorileri"></div>
+
+          <section class="home-stories" aria-labelledby="storiesTitle">
+            <div class="home-section-heading">
+              <div>
+                <p class="eyebrow alt">Keşfet</p>
+                <h2 id="storiesTitle">Koleksiyonlar</h2>
+              </div>
+            </div>
+            <div class="story-list">
+              <a class="story-item" href="#newGames">
+                <span class="story-ring"><span>✦</span></span>
+                <span>Yeni oyunlar</span>
+              </a>
+              <a class="story-item" href="#popularGames">
+                <span class="story-ring"><span>♛</span></span>
+                <span>Popüler</span>
+              </a>
+              <a class="story-item" href="#providerShowcase">
+                <span class="story-ring"><span>◈</span></span>
+                <span>Sağlayıcılar</span>
+              </a>
+              <a class="story-item" href="#games">
+                <span class="story-ring"><span>▦</span></span>
+                <span>Tüm oyunlar</span>
+              </a>
+            </div>
+          </section>
+
+          <section class="home-game-shelf" id="newGames" aria-labelledby="newGamesTitle">
+            <div class="home-section-heading">
+              <div>
+                <p class="eyebrow alt">Kataloğa yeni eklenenler</p>
+                <h2 id="newGamesTitle">Yeni Oyunlar</h2>
+              </div>
+              <a href="#games" class="home-see-all">Tümünü gör <span aria-hidden="true">›</span></a>
+            </div>
+            <div id="newGamesGrid" class="game-grid home-highlight-grid" aria-live="polite"></div>
+          </section>
+
+          <section class="home-game-shelf" id="popularGames" aria-labelledby="popularGamesTitle">
+            <div class="home-section-heading">
+              <div>
+                <p class="eyebrow alt">Oyuncuların keşfettikleri</p>
+                <h2 id="popularGamesTitle">Popüler Oyunlar</h2>
+              </div>
+              <a href="#games" class="home-see-all">Tümünü gör <span aria-hidden="true">›</span></a>
+            </div>
+            <div id="popularGamesGrid" class="game-grid home-highlight-grid" aria-live="polite"></div>
+          </section>
+
+          <section class="home-provider-shelf" id="providerShowcase" aria-labelledby="providerTitle">
+            <div class="home-section-heading">
+              <div>
+                <p class="eyebrow alt">Kataloğu sağlayıcıya göre keşfet</p>
+                <h2 id="providerTitle">Oyun Sağlayıcıları</h2>
+              </div>
+            </div>
+            <div id="providerShowcaseList" class="provider-showcase-list" aria-live="polite"></div>
+          </section>
+
           <section class="catalog" id="games">
             <div hidden aria-hidden="true">
               <span id="gameTotal"></span>
@@ -67,7 +151,6 @@
               </div>
             </div>
 
-            <div id="categoryChips" class="category-chips" aria-label="Oyun kategorileri"></div>
             <p id="apiStatus" class="api-status" role="status">Oyunlar yükleniyor...</p>
             <div id="gameGrid" class="game-grid" aria-live="polite"></div>
             <button id="loadMoreGames" class="load-more primary-btn" type="button" hidden>Daha fazla oyun göster</button>
@@ -141,6 +224,14 @@
       </main>
     </div>
 
+    <nav class="mobile-home-dock" aria-label="Hızlı gezinme">
+      <a href="#home"><span aria-hidden="true">⌂</span>Keşfet</a>
+      <a href="#games"><span aria-hidden="true">▦</span>Oyunlar</a>
+      <a href="#newGames"><span aria-hidden="true">✦</span>Yeni</a>
+      <a href="#popularGames"><span aria-hidden="true">♛</span>Popüler</a>
+      <a href="profile/"><span aria-hidden="true">●</span>Profil</a>
+    </nav>
+
     <div id="gameModal" class="modal hidden" aria-hidden="true">
       <div class="modal-backdrop" data-close="true"></div>
       <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
@@ -149,6 +240,6 @@
       </div>
     </div>
 
-    <script src="script.js?v=10"></script>
+    <script src="script.js?v=12"></script>
   </body>
 </html>

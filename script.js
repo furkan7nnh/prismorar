@@ -75,6 +75,9 @@ const loadMoreButton = document.getElementById('loadMoreGames');
 const gameTotal = document.getElementById('gameTotal');
 const availableTotal = document.getElementById('availableTotal');
 const featuredCards = document.querySelectorAll('[data-featured-game]');
+const newGamesGrid = document.getElementById('newGamesGrid');
+const popularGamesGrid = document.getElementById('popularGamesGrid');
+const providerShowcaseList = document.getElementById('providerShowcaseList');
 
 const DESKTOP_GAME_BATCH_SIZE = 48;
 const MOBILE_GAME_BATCH_SIZE = 12;
@@ -398,6 +401,72 @@ function renderFeaturedGames() {
   });
 }
 
+function renderGameCard(game) {
+  const imageSource = new URL(game.image, SOURCE_URL).href;
+  const gameLabel = labelNames.get(game.labels.find((label) => label.slug !== 'all')?.slug) || 'Casino';
+
+  return `
+    <article class="game-card">
+      <div class="game-card-art">
+        <img class="game-art-image" src="${escapeHTML(imageSource)}" alt="${escapeHTML(game.name)} oyun görseli" data-game-id="${escapeHTML(game.id)}" loading="lazy" decoding="async">
+        <span class="tag">${escapeHTML(gameLabel)}</span>
+      </div>
+      <div class="game-card-content">
+        <div class="meta">
+          <span class="badge">${escapeHTML(game.provider)}</span>
+          <span class="badge">Hazır</span>
+        </div>
+        <h3>${escapeHTML(game.name)}</h3>
+        <div class="game-card-footer">
+          <span class="source-game-id" title="Oyun kimliği">${escapeHTML(game.id)}</span>
+          <button class="play-btn" type="button" data-launch="${escapeHTML(game.id)}">Oyunu başlat</button>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function renderHomeShelves() {
+  if (newGamesGrid) {
+    const newGames = games.filter((game) => game.labels.some((label) => label.slug === 'esr')).slice(0, 8);
+    newGamesGrid.innerHTML = newGames.map(renderGameCard).join('');
+    newGamesGrid.closest('.home-game-shelf').hidden = newGames.length === 0;
+  }
+
+  if (popularGamesGrid) {
+    const popularGames = games.filter((game) => game.labels.some((label) => label.slug === 'est')).slice(0, 8);
+    popularGamesGrid.innerHTML = popularGames.map(renderGameCard).join('');
+    popularGamesGrid.closest('.home-game-shelf').hidden = popularGames.length === 0;
+  }
+
+  if (providerShowcaseList) {
+    const providerCounts = new Map();
+    games.forEach((game) => providerCounts.set(game.provider, (providerCounts.get(game.provider) || 0) + 1));
+    providerShowcaseList.innerHTML = [...providerCounts]
+      .sort((first, second) => second[1] - first[1] || first[0].localeCompare(second[0], 'tr'))
+      .slice(0, 12)
+      .map(([provider, count]) => `
+        <button class="provider-showcase-chip" type="button" data-provider="${escapeHTML(provider)}">
+          <span class="provider-showcase-mark">${escapeHTML(provider.slice(0, 1).toLocaleUpperCase('tr'))}</span>
+          <span>${escapeHTML(provider)}</span>
+          <small>${count.toLocaleString('tr-TR')} oyun</small>
+        </button>
+      `).join('');
+  }
+}
+
+if (providerShowcaseList) {
+  providerShowcaseList.addEventListener('click', (event) => {
+    if (!(event.target instanceof Element)) return;
+    const providerButton = event.target.closest('[data-provider]');
+    if (!providerButton) return;
+    providerFilter.value = providerButton.dataset.provider;
+    visibleGameCount = getGameBatchSize();
+    renderGames();
+    document.getElementById('games').scrollIntoView({ behavior: 'smooth' });
+  });
+}
+
 function renderGames() {
   const filteredGames = getFilteredGames();
   const visibleGames = filteredGames.slice(0, visibleGameCount);
@@ -519,6 +588,7 @@ function displayCatalog(data) {
   gameTotal.textContent = games.length.toLocaleString('tr-TR');
   availableTotal.textContent = games.filter((game) => game.demoSupported).length.toLocaleString('tr-TR');
   renderFeaturedGames();
+  renderHomeShelves();
   renderGames();
 }
 

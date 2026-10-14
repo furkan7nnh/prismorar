@@ -1,6 +1,10 @@
 const SOURCE_URL = 'https://multiwin223.com/';
 const API_URL = new URL('/api/v2/games/pages/mirror/casino', SOURCE_URL);
 const GAME_LAUNCH_API_URL = new URL('/api/v1/games/launch-demo-mode/', SOURCE_URL);
+const CATALOG_URL = new URL('catalog.json?v=5', document.baseURI);
+const CATALOG_CACHE_NAME = 'prismorar-catalog';
+const CATALOG_CACHE_VERSION = 1;
+const CATALOG_REFRESH_INTERVAL = 4 * 60 * 60 * 1000;
 const EMPTY_LABELS = [];
 const EMPTY_CURRENCIES = [];
 
@@ -20,6 +24,7 @@ const featuredCards = document.querySelectorAll('[data-featured-game]');
 const DESKTOP_GAME_BATCH_SIZE = 48;
 const MOBILE_GAME_BATCH_SIZE = 12;
 let games = [];
+let labelNames = new Map();
 let visibleGameCount = getGameBatchSize();
 
 function getGameBatchSize() {
@@ -61,8 +66,127 @@ function normalizeGame(record) {
     supportedCurrencies: Array.isArray(record.supported_currencies)
       ? record.supported_currencies
       : EMPTY_CURRENCIES,
-    labels: Array.isArray(record.labels) ? record.labels : EMPTY_LABELS
+    labels: Array.isArray(record.labels)
+      ? record.labels.map((label) => typeof label === 'string' ? { slug: label } : label)
+      : EMPTY_LABELS
   };
+}
+
+function decodeCatalog(data) {
+  if (data?.version !== 1) return data;
+
+  const labels = data.labels.map(([slug, name, position, order]) => ({ slug, name, position, order }));
+  return {
+    updatedAt: data.updatedAt,
+    providers: data.providers.map((name) => ({ name })),
+    labels,
+    games: data.games.map(([id, name, provider, image, currency, gameLabels]) => ({
+      id,
+      name,
+      provider_name: provider,
+      cover_image: image,
+      demo_mode_supported: true,
+      supported_currencies: currency ? [currency] : [],
+      labels: gameLabels.map((labelIndex) => labels[labelIndex]?.slug || labelIndex)
+    }))
+  };
+}
+
+function openCatalogCache() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(CATALOG_CACHE_NAME, CATALOG_CACHE_VERSION);
+    request.onupgradeneeded = () => request.result.createObjectStore('catalog');
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error || new Error('Katalog önbelleği açılamadı.'));
+  });
+}
+
+async function readCatalogCache() {
+  let database;
+  try {
+    database = await openCatalogCache();
+    return await new Promise((resolve, reject) => {
+      const request = database.transaction('catalog', 'readonly').objectStore('catalog').get('games');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error('Katalog önbelleği okunamadı.'));
+    });
+  } catch (error) {
+    console.warn('Katalog önbelleği okunamadı; dosyadaki katalog kullanılacak.', error);
+    return null;
+  } finally {
+    if (database) database.close();
+  }
+}
+
+async function writeCatalogCache(data) {
+  let database;
+  try {
+    database = await openCatalogCache();
+    await new Promise((resolve, reject) => {
+      const transaction = database.transaction('catalog', 'readwrite');
+      transaction.objectStore('catalog').put(data, 'games');
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error || new Error('Katalog önbelleğe yazılamadı.'));
+      transaction.onabort = () => reject(transaction.error || new Error('Katalog önbelleğe yazılamadı.'));
+    });
+  } catch (error) {
+    console.warn('Katalog önbelleğe kaydedilemedi.', error);
+  } finally {
+    if (database) database.close();
+  }
+}
+
+function createCatalogData(data) {
+  if (!Array.isArray(data?.games)) {
+    throw new Error('Yanıt içinde oyun listesi bulunamadı.');
+  }
+
+  return {
+    updatedAt: new Date().toISOString(),
+    providers: (data.providers || []).map((provider) => ({ name: provider.name })),
+    labels: (data.labels || [])
+      .filter((label) => label.slug !== 'all')
+      .map(({ slug, name, position, order }) => ({
+        slug,
+        name: getLocalizedName(name),
+        position,
+        order
+      })),
+    games: data.games
+      .filter((record) => record.active && record.available && record.provider_is_active && record.demo_mode_supported === true)
+      .map((record) => {
+        const currencies = Array.isArray(record.supported_currencies)
+          ? record.supported_currencies
+          : EMPTY_CURRENCIES;
+        const currency = currencies.includes('USD') ? 'USD' : currencies[0];
+        return {
+          id: record.id,
+          name: record.custom_name || record.name,
+          provider_name: record.provider_name,
+          cover_image: record.custom_cover_image
+            || record.cover_image
+            || record.custom_background_image
+            || record.background_image
+            || '',
+          demo_mode_supported: true,
+          supported_currencies: currency ? [currency] : [],
+          labels: (record.labels || [])
+            .filter((label) => label.slug !== 'all')
+            .map(({ slug }) => slug)
+        };
+      })
+      .filter((record) => record.id && record.name && record.provider_name)
+  };
+}
+
+async function fetchLiveCatalog() {
+  const response = await fetch(API_URL, {
+    headers: { Accept: 'application/json' },
+    credentials: 'omit'
+  });
+  if (!response.ok) throw new Error(`İstek başarısız: HTTP ${response.status}`);
+  const payload = await response.json();
+  return createCatalogData(payload?.data);
 }
 
 async function requestGameLaunchUrl(game) {
@@ -101,7 +225,11 @@ async function requestGameLaunchUrl(game) {
 }
 
 function populateFilters(providers, labels) {
+  const previousProvider = providerFilter.value;
+  const previousLabel = labelFilter.value;
+  labelNames = new Map(labels.map((label) => [label.slug, getLocalizedName(label.name)]));
   const providerOptions = [...new Set(providers.map((provider) => provider.name).filter(Boolean))].sort();
+  providerFilter.replaceChildren(new Option('Tüm sağlayıcılar', 'all'));
   providerFilter.insertAdjacentHTML(
     'beforeend',
     providerOptions.map((provider) => `<option value="${escapeHTML(provider)}">${escapeHTML(provider)}</option>`).join('')
@@ -118,6 +246,7 @@ function populateFilters(providers, labels) {
       }
     });
   });
+  labelFilter.replaceChildren(new Option('Tüm kategoriler', 'all'));
   labelFilter.insertAdjacentHTML(
     'beforeend',
     categoryOptions.map((label) => `<option value="${escapeHTML(label.slug)}">${escapeHTML(getLocalizedName(label.name))}</option>`).join('')
@@ -130,6 +259,8 @@ function populateFilters(providers, labels) {
       return `<button class="category-chip" type="button" data-category="${escapeHTML(label.slug)}">${escapeHTML(categoryName)} <span>${count.toLocaleString('tr-TR')}</span></button>`;
     })
   ].join('');
+  if (providerOptions.includes(previousProvider)) providerFilter.value = previousProvider;
+  if (categoryOptions.some((label) => label.slug === previousLabel)) labelFilter.value = previousLabel;
 }
 
 function getFilteredGames() {
@@ -175,7 +306,7 @@ function renderGames() {
     <article class="game-card">
       <div class="game-card-art">
         ${game.image ? `<img class="game-art-image" src="${escapeHTML(new URL(game.image, SOURCE_URL).href)}" alt="${escapeHTML(game.name)} oyun görseli" loading="lazy" decoding="async">` : ''}
-        <span class="tag">${escapeHTML(getLocalizedName(game.labels.find((label) => label.slug !== 'all')?.name) || 'Casino')}</span>
+        <span class="tag">${escapeHTML(labelNames.get(game.labels.find((label) => label.slug !== 'all')?.slug) || 'Casino')}</span>
       </div>
       <div class="game-card-content">
         <div class="meta">
@@ -255,35 +386,63 @@ function closeModal() {
   modalContent.replaceChildren();
 }
 
+function displayCatalog(data) {
+  games = data.games.map(normalizeGame).filter(Boolean);
+  populateFilters(data.providers || [], data.labels || []);
+  gameTotal.textContent = games.length.toLocaleString('tr-TR');
+  availableTotal.textContent = games.filter((game) => game.demoSupported).length.toLocaleString('tr-TR');
+  renderFeaturedGames();
+  renderGames();
+}
+
+function scheduleLiveRefresh() {
+  const refresh = async () => {
+    try {
+      const data = await fetchLiveCatalog();
+      displayCatalog(data);
+      await writeCatalogCache(data);
+    } catch (error) {
+      console.error('Canlı katalog güncellenemedi.', error);
+      apiStatus.textContent = 'Kayıtlı oyun listesi gösteriliyor; canlı katalog güncellenemedi.';
+    }
+  };
+
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(refresh, { timeout: 8000 });
+  } else {
+    window.setTimeout(refresh, 3000);
+  }
+}
+
 async function loadGames() {
-  apiStatus.textContent = 'Oyunlar yükleniyor...';
+  apiStatus.textContent = 'Katalog yükleniyor...';
+
+  let initialData = await readCatalogCache();
+  const loadedFromCache = Array.isArray(initialData?.games);
+  if (!Array.isArray(initialData?.games)) {
+    try {
+      const response = await fetch(CATALOG_URL);
+      if (!response.ok) throw new Error(`Katalog dosyası yüklenemedi (HTTP ${response.status}).`);
+      initialData = decodeCatalog(await response.json());
+    } catch (error) {
+      console.warn('Hazır katalog dosyası kullanılamadı; canlı katalog deneniyor.', error);
+    }
+  }
+
+  if (Array.isArray(initialData?.games)) {
+    displayCatalog(initialData);
+    if (!loadedFromCache) await writeCatalogCache(initialData);
+    const updatedAt = Date.parse(initialData.updatedAt);
+    if (!Number.isFinite(updatedAt) || Date.now() - updatedAt >= CATALOG_REFRESH_INTERVAL) {
+      scheduleLiveRefresh();
+    }
+    return;
+  }
 
   try {
-    const response = await fetch(API_URL, {
-      headers: { Accept: 'application/json' },
-      credentials: 'omit'
-    });
-
-    if (!response.ok) {
-      throw new Error(`İstek başarısız: HTTP ${response.status}`);
-    }
-
-    const payload = await response.json();
-    const data = payload?.data;
-    if (!Array.isArray(data?.games)) {
-      throw new Error('Yanıt içinde oyun listesi bulunamadı.');
-    }
-
-    games = data.games
-      .filter((record) => record.active && record.available && record.provider_is_active && record.demo_mode_supported === true)
-      .map(normalizeGame)
-      .filter(Boolean);
-
-    populateFilters(data.providers || [], data.labels || []);
-    gameTotal.textContent = games.length.toLocaleString('tr-TR');
-    availableTotal.textContent = games.filter((game) => game.demoSupported).length.toLocaleString('tr-TR');
-    renderFeaturedGames();
-    renderGames();
+    const data = await fetchLiveCatalog();
+    displayCatalog(data);
+    await writeCatalogCache(data);
   } catch (error) {
     apiStatus.textContent = `Oyun listesi yüklenemedi: ${error.message}`;
     gameGrid.innerHTML = '<p class="api-error">Oyun listesine erişilemedi. Sayfayı yenileyerek tekrar deneyebilirsin.</p>';

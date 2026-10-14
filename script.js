@@ -48,47 +48,14 @@ function getLocalizedName(value) {
   return value?.tr || value?.en || '';
 }
 
-function escapeXML(value) {
-  return String(value).replace(/[&<>"']/g, (character) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&apos;'
-  })[character]);
-}
-
 function createFallbackArtwork(game) {
-  const palettes = [
-    ['#41216d', '#d64b79', '#ffbd69'],
-    ['#103d63', '#257e91', '#a5f3d0'],
-    ['#713c24', '#d78536', '#ffe08a'],
-    ['#283475', '#685be2', '#b7a5ff']
-  ];
-  const colorIndex = [...game.name].reduce((sum, character) => sum + character.charCodeAt(0), 0) % palettes.length;
-  const [start, end, accent] = palettes[colorIndex];
-  const words = game.name.split(/\s+/);
-  const titleLines = [];
-  let line = '';
-  words.forEach((word) => {
-    if (line && `${line} ${word}`.length > 18) {
-      titleLines.push(line);
-      line = word;
-    } else {
-      line = line ? `${line} ${word}` : word;
-    }
-  });
-  if (line) titleLines.push(line);
-  if (titleLines.length > 3) {
-    titleLines.length = 3;
-    titleLines[2] = `${titleLines[2].slice(0, 15)}...`;
-  }
-
-  const title = titleLines
-    .map((titleLine, index) => `<text x="180" y="${365 + index * 34}" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-size="25" font-weight="700">${escapeXML(titleLine)}</text>`)
-    .join('');
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="540" viewBox="0 0 360 540"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${start}"/><stop offset="1" stop-color="${end}"/></linearGradient><radialGradient id="orb"><stop stop-color="${accent}" stop-opacity=".8"/><stop offset="1" stop-color="${accent}" stop-opacity="0"/></radialGradient></defs><rect width="360" height="540" fill="url(#bg)"/><circle cx="286" cy="112" r="112" fill="url(#orb)"/><circle cx="72" cy="386" r="128" fill="url(#orb)"/><path d="M180 112l15 38 41 3-31 27 10 40-35-22-35 22 10-40-31-27 41-3z" fill="${accent}" fill-opacity=".9"/><circle cx="180" cy="184" r="88" fill="none" stroke="#fff" stroke-opacity=".32" stroke-width="2"/><circle cx="180" cy="184" r="68" fill="none" stroke="${accent}" stroke-opacity=".7" stroke-width="3"/><path d="M28 286h304" stroke="#fff" stroke-opacity=".24"/><text x="180" y="337" text-anchor="middle" fill="${accent}" font-family="Arial,sans-serif" font-size="13" font-weight="700" letter-spacing="3">${escapeXML(game.provider.toUpperCase())}</text>${title}<text x="180" y="500" text-anchor="middle" fill="#fff" fill-opacity=".75" font-family="Arial,sans-serif" font-size="12" letter-spacing="4">GÖKHAN BET</text></svg>`;
-  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+  const colorIndex = [...game.name].reduce((sum, character) => sum + character.charCodeAt(0), 0) % 4;
+  return `<div class="game-art-fallback game-art-fallback-${colorIndex}" role="img" aria-label="${escapeHTML(game.name)} oyun görseli">
+    <span class="game-art-fallback-icon" aria-hidden="true">✦</span>
+    <span class="game-art-fallback-provider">${escapeHTML(game.provider)}</span>
+    <strong>${escapeHTML(game.name)}</strong>
+    <small>GÖKHAN BET</small>
+  </div>`;
 }
 
 function normalizeGame(record) {
@@ -349,14 +316,15 @@ function renderGames() {
     const hasGameArtwork = Boolean(game.image);
     const imageSource = hasGameArtwork
       ? new URL(game.image, SOURCE_URL).href
+      : '';
+    const artworkMarkup = hasGameArtwork
+      ? `<img class="game-art-image" src="${escapeHTML(imageSource)}" alt="${escapeHTML(game.name)} oyun görseli" data-game-id="${escapeHTML(game.id)}" loading="lazy" decoding="async">`
       : createFallbackArtwork(game);
-    const imageClass = hasGameArtwork ? '' : ' game-art-placeholder';
-    const fallbackApplied = hasGameArtwork ? '' : 'data-fallback-applied="true"';
 
     return `
       <article class="game-card">
         <div class="game-card-art">
-          <img class="game-art-image${imageClass}" src="${escapeHTML(imageSource)}" alt="${escapeHTML(game.name)} oyun görseli" data-game-id="${escapeHTML(game.id)}" ${fallbackApplied} loading="lazy" decoding="async">
+          ${artworkMarkup}
           <span class="tag">${escapeHTML(labelNames.get(game.labels.find((label) => label.slug !== 'all')?.slug) || 'Casino')}</span>
         </div>
         <div class="game-card-content">
@@ -390,14 +358,11 @@ function renderGames() {
 
 gameGrid.addEventListener('error', (event) => {
   if (!(event.target instanceof HTMLImageElement) || !event.target.classList.contains('game-art-image')) return;
-  if (event.target.dataset.fallbackApplied === 'true') return;
 
   const game = games.find((item) => item.id === event.target.dataset.gameId);
   if (!game) return;
 
-  event.target.dataset.fallbackApplied = 'true';
-  event.target.classList.add('game-art-placeholder');
-  event.target.src = createFallbackArtwork(game);
+  event.target.outerHTML = createFallbackArtwork(game);
 }, true);
 
 function openGamePlayer(gameId) {

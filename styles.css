@@ -355,22 +355,52 @@ input {
   margin: 28px 0 42px;
 }
 
+.section-heading {
+  margin-bottom: 18px;
+}
+
+.section-heading h2 {
+  margin: 8px 0 0;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  letter-spacing: -0.05em;
+}
+
 .payment-grid,
 .profile-menu-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 18px;
 }
 
+.payment-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .payment-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 20px 18px;
   border-radius: 22px;
-  border: 1px solid var(--line);
-  background: rgba(13, 24, 39, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(13, 24, 39, 0.96), rgba(12, 18, 30, 0.9));
   box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.payment-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-2), var(--primary), var(--gold));
+}
+
+.payment-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(107, 124, 255, 0.4);
+  box-shadow: 0 18px 42px rgba(1, 7, 16, 0.48);
 }
 
 .payment-head {
@@ -387,7 +417,7 @@ input {
   background: rgba(94, 241, 207, 0.12);
   border: 1px solid rgba(94, 241, 207, 0.25);
   color: #d7fff7;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -397,16 +427,18 @@ input {
 .payment-icon {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 12px;
   background: linear-gradient(135deg, var(--primary), #8b74ff);
+  color: #fff;
   font-weight: 800;
+  box-shadow: 0 12px 25px rgba(107, 124, 255, 0.28);
 }
 
 .payment-card h3 {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 1.35rem;
   letter-spacing: -0.04em;
 }
 
@@ -435,36 +467,28 @@ input {
   gap: 12px;
   padding: 14px 16px;
   border-radius: 16px;
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
   color: var(--text);
   text-decoration: none;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
 
 .profile-menu-item:hover,
 .profile-menu-item:focus-visible {
   transform: translateY(-2px);
-  border-color: rgba(107, 124, 255, 0.5);
+  border-color: rgba(94, 241, 207, 0.45);
+  background: linear-gradient(180deg, rgba(94, 241, 207, 0.08), rgba(255,255,255,0.03));
 }
 
 .profile-menu-item strong {
   color: var(--primary-2);
-  font-size: 1.3rem;
+  font-size: 1.4rem;
+  line-height: 1;
 }
 
 .pricing {
   margin: 28px 0 42px;
-}
-
-.section-heading {
-  margin-bottom: 18px;
-}
-
-.section-heading h2 {
-  margin: 8px 0 0;
-  font-size: clamp(1.8rem, 3vw, 2.6rem);
-  letter-spacing: -0.05em;
 }
 
 .pricing-grid {

@@ -165,16 +165,16 @@ function openGameInNewTab(gameId) {
 
   const gameWindow = window.open('about:blank', '_blank');
   if (!gameWindow) {
-    apiStatus.textContent = 'Yeni sekme açılamadı. Tarayıcıda açılır pencerelere izin verip tekrar dene.';
+    apiStatus.textContent = 'Oyun başlatılamadı. Tarayıcıda açılır pencerelere izin verip tekrar dene.';
     return;
   }
 
   gameWindow.opener = null;
-  apiStatus.textContent = `${game.name} yeni sekmede açılıyor...`;
+  apiStatus.textContent = `${game.name} açılıyor...`;
   requestGameLaunchUrl(game)
     .then((launchUrl) => {
       gameWindow.location.href = launchUrl;
-      apiStatus.textContent = `${game.name} yeni sekmede açıldı.`;
+      apiStatus.textContent = `${game.name} açıldı.`;
     })
     .catch((error) => {
       gameWindow.close();

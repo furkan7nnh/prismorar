@@ -3,8 +3,6 @@ const API_URL = new URL('/api/v2/games/pages/mirror/casino', SOURCE_URL);
 const GAME_LAUNCH_API_URL = new URL('/api/v1/games/launch-demo-mode/', SOURCE_URL);
 
 const gameGrid = document.getElementById('gameGrid');
-const modal = document.getElementById('gameModal');
-const modalContent = document.getElementById('modalContent');
 const searchInput = document.getElementById('searchInput');
 const providerFilter = document.getElementById('providerFilter');
 const labelFilter = document.getElementById('labelFilter');
@@ -161,47 +159,26 @@ function renderGames() {
   apiStatus.textContent = `${filteredGames.length.toLocaleString('tr-TR')} oyun gösteriliyor.`;
 }
 
-function openGamePlayer(gameId) {
+function openGameInNewTab(gameId) {
   const game = games.find((item) => item.id === gameId);
   if (!game) return;
 
-  modal.classList.add('is-playing');
-  modal.classList.remove('hidden');
-  modal.setAttribute('aria-hidden', 'false');
-  modalContent.innerHTML = `
-    <div class="game-player-toolbar">
-      <div>
-        <h3 id="modalTitle">${escapeHTML(game.name)}</h3>
-        <p id="playerStatus" role="status">Bağlantı alınıyor...</p>
-      </div>
-      <a class="secondary-btn hidden" id="openGameInNewTab" href="#" target="_blank" rel="noopener noreferrer">Yeni sekmede aç ↗</a>
-    </div>
-    <iframe
-      class="game-player-frame"
-      src="about:blank"
-      title="${escapeHTML(game.name)} oyunu"
-      allow="autoplay; fullscreen; gamepad"
-      allowfullscreen
-      referrerpolicy="strict-origin-when-cross-origin"></iframe>
-  `;
+  const gameWindow = window.open('about:blank', '_blank');
+  if (!gameWindow) {
+    apiStatus.textContent = 'Yeni sekme açılamadı. Tarayıcıda açılır pencerelere izin verip tekrar dene.';
+    return;
+  }
 
-  const frame = modalContent.querySelector('.game-player-frame');
-  const status = modalContent.querySelector('#playerStatus');
+  gameWindow.opener = null;
+  apiStatus.textContent = `${game.name} yeni sekmede açılıyor...`;
   requestGameLaunchUrl(game)
     .then((launchUrl) => {
-      frame.addEventListener('load', () => {
-        const currentStatus = modalContent.querySelector('#playerStatus');
-        if (currentStatus) currentStatus.textContent = 'Oyun açıldı.';
-      }, { once: true });
-      frame.src = launchUrl;
-      const openGameLink = modalContent.querySelector('#openGameInNewTab');
-      openGameLink.href = launchUrl;
-      openGameLink.classList.remove('hidden');
-      status.textContent = 'Oyun yükleniyor...';
+      gameWindow.location.href = launchUrl;
+      apiStatus.textContent = `${game.name} yeni sekmede açıldı.`;
     })
     .catch((error) => {
-      status.textContent = `Açılırken hata oluştu: ${error.message}`;
-      frame.remove();
+      gameWindow.close();
+      apiStatus.textContent = `${game.name} açılamadı: ${error.message}`;
     });
 }
 
@@ -240,13 +217,6 @@ async function loadGames() {
   }
 }
 
-function closeModal() {
-  modal.classList.add('hidden');
-  modal.setAttribute('aria-hidden', 'true');
-  modal.classList.remove('is-playing');
-  modalContent.replaceChildren();
-}
-
 searchInput.addEventListener('input', () => {
   renderGames();
 });
@@ -270,12 +240,7 @@ categoryChips.addEventListener('click', (event) => {
 document.addEventListener('click', (event) => {
   if (!(event.target instanceof Element)) return;
   const launchButton = event.target.closest('[data-launch]');
-  if (launchButton) openGamePlayer(launchButton.dataset.launch);
-  if (event.target.matches('[data-close="true"]')) closeModal();
-});
-
-document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+  if (launchButton) openGameInNewTab(launchButton.dataset.launch);
 });
 
 loadGames().catch((error) => console.error('Oyun kataloğu yüklenemedi.', error));

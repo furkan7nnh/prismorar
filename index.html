@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=2" />
+    <link rel="stylesheet" href="styles.css?v=10" />
   </head>
   <body>
     <div class="page-shell">
@@ -23,182 +23,108 @@
         </div>
 
         <nav class="main-nav" aria-label="Ana menü">
-          <a href="#">Anasayfa</a>
+          <a href="#home" data-show-view="home">Anasayfa</a>
           <a href="#games">Oyunlar</a>
-          <a href="#featured">Öne Çıkan</a>
-          <a href="#payment-methods">Ödemeler</a>
-          <a href="#">İletişim</a>
+          <a href="profile/">Profil</a>
         </nav>
 
       </header>
 
       <main>
-        <section class="hero" id="featured">
-          <div class="hero-copy">
-            <span class="pill">Katalog</span>
-            <div class="hero-title-row">
-              <h2>Gökhan Bet</h2>
-              <img class="hero-portrait" src="assets/gokhan-bet.jpg?v=2" alt="Gökhan Bet" width="120" height="120" loading="eager" decoding="async" />
+        <div class="page-view home-view">
+          <section class="catalog" id="games">
+            <div hidden aria-hidden="true">
+              <span id="gameTotal"></span>
+              <span id="availableTotal"></span>
             </div>
-            <div class="hero-actions">
-              <a class="primary-btn" href="#games">Kataloğu gör</a>
-              <a class="secondary-btn" href="#games">Gözat</a>
-            </div>
-            <div class="stats">
+            <div class="catalog-header">
               <div>
-                <strong id="gameTotal">...</strong>
-                <span>Oyun</span>
+                <p class="eyebrow alt">Katalog</p>
+                <h2>Oyun kataloğu</h2>
               </div>
+
+              <div class="toolbar">
+                <input id="searchInput" type="search" placeholder="Oyun ara..." aria-label="Oyun ara" />
+                <select id="labelFilter" aria-label="Oyun türüne göre filtrele">
+                  <option value="all">Tüm kategoriler</option>
+                </select>
+                <select id="providerFilter" aria-label="Sağlayıcıya göre filtrele">
+                  <option value="all">Tüm sağlayıcılar</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="categoryChips" class="category-chips" aria-label="Oyun kategorileri"></div>
+            <p id="apiStatus" class="api-status" role="status">Oyunlar yükleniyor...</p>
+            <div id="gameGrid" class="game-grid" aria-live="polite"></div>
+            <button id="loadMoreGames" class="load-more primary-btn" type="button" hidden>Daha fazla oyun göster</button>
+          </section>
+        </div>
+
+          <section class="page-view profile-view hidden" id="profile" aria-live="polite">
+            <div class="profile-hero">
               <div>
-                <strong id="availableTotal">...</strong>
-                <span>Kullanılabilir</span>
+                <p class="eyebrow alt">Hesap</p>
+                <h2>Profil</h2>
               </div>
-            </div>
-          </div>
-
-          <div class="hero-showcase" aria-label="Öne çıkan oyunlar">
-            <a class="showcase-card large" href="#games" data-featured-game="Sweet Powernudge">
-              <img class="showcase-art-image" alt="" loading="lazy" />
-              <span class="tag">Popüler</span>
-              <h3>Sweet Powernudge</h3>
-              <p>Pragmatic Play · Slot</p>
-            </a>
-            <a class="showcase-card small accent-one" href="#games" data-featured-game="Sugar Rush Dice">
-              <img class="showcase-art-image" alt="" loading="lazy" />
-              <span class="tag">Oyun</span>
-              <h3>Sugar Rush Dice</h3>
-            </a>
-            <a class="showcase-card small accent-two" href="#games" data-featured-game="Sweet Bonanza 1000">
-              <img class="showcase-art-image" alt="" loading="lazy" />
-              <span class="tag">Oyun</span>
-              <h3>Sweet Bonanza 1000</h3>
-            </a>
-          </div>
-        </section>
-
-        <section class="signup-promo">
-          <div class="signup-copy">
-            <p class="eyebrow alt">Kayıt ol</p>
-            <h2>Hoşgeldin bonusu ve özel fırsatlar seni bekliyor</h2>
-            <p>Üye olduktan sonra ilk yatırımında özel bonus fırsatları, günlük promosyonlar ve hızlı destek avantajlarından yararlan.</p>
-            <div class="signup-actions">
-              <a class="primary-btn" href="#games">Kayıt ol</a>
-              <a class="secondary-btn" href="#pricing">Bonusları gör</a>
-            </div>
-          </div>
-
-          <div class="bonus-grid">
-            <article class="bonus-card">
-              <span class="bonus-label">%100</span>
-              <h3>Hoşgeldin Bonusu</h3>
-              <p>İlk yatırımında özel bonus fırsatı.</p>
-            </article>
-            <article class="bonus-card">
-              <span class="bonus-label">₺250</span>
-              <h3>İlk Adım Paketi</h3>
-              <p>Yeni üyeler için özel başlangıç desteği.</p>
-            </article>
-            <article class="bonus-card">
-              <span class="bonus-label">VIP</span>
-              <h3>Özel Promosyonlar</h3>
-              <p>Haftalık ve aylık ekstra avantajlar.</p>
-            </article>
-          </div>
-        </section>
-
-        <section class="payment-methods" id="payment-methods">
-          <div class="section-heading">
-            <p class="eyebrow alt">Ödemeler</p>
-            <h2>Yatırım yöntemleri</h2>
-          </div>
-          <div id="paymentMethods" class="payment-grid" aria-live="polite"></div>
-        </section>
-
-        <section class="profile-menu-section" id="profile-menu">
-          <div class="section-heading">
-            <p class="eyebrow alt">Hesap</p>
-            <h2>Profil menüsü</h2>
-          </div>
-          <div id="profileMenu" class="profile-menu-grid" aria-live="polite"></div>
-        </section>
-
-        <section class="pricing" id="pricing">
-          <div class="section-heading">
-            <p class="eyebrow alt">Ücretler</p>
-            <h2>Üyelik seçenekleri</h2>
-          </div>
-
-          <div class="pricing-grid">
-            <article class="pricing-card">
-              <span class="pricing-badge">Başlangıç</span>
-              <h3>Mini</h3>
-              <div class="price-line">
-                <strong>₺250</strong>
-                <span>Ay</span>
-              </div>
-              <ul>
-                <li>Temel erişim</li>
-                <li>Seçili oyunlar</li>
-                <li>1 destek talebi</li>
-              </ul>
-              <a class="secondary-btn" href="#games">İletişime geç</a>
-            </article>
-
-            <article class="pricing-card featured">
-              <span class="pricing-badge">En çok tercih edilen</span>
-              <h3>Plus</h3>
-              <div class="price-line">
-                <strong>₺500</strong>
-                <span>Ay</span>
-              </div>
-              <ul>
-                <li>Tüm oyunlara erişim</li>
-                <li>Öncelikli destek</li>
-                <li>Bonus fırsatları</li>
-              </ul>
-              <a class="primary-btn" href="#games">Hemen başla</a>
-            </article>
-
-            <article class="pricing-card">
-              <span class="pricing-badge">VIP</span>
-              <h3>Premium</h3>
-              <div class="price-line">
-                <strong>₺1.000</strong>
-                <span>Ay</span>
-              </div>
-              <ul>
-                <li>VIP destek hattı</li>
-                <li>Özel bonuslar</li>
-                <li>Öncelikli yatırım planı</li>
-              </ul>
-              <a class="secondary-btn" href="#games">Fiyat al</a>
-            </article>
-          </div>
-        </section>
-
-        <section class="catalog" id="games">
-          <div class="catalog-header">
-            <div>
-              <p class="eyebrow alt">Katalog</p>
-              <h2>Oyun kataloğu</h2>
+              <a class="secondary-btn" href="#">Çıkış yap</a>
             </div>
 
-            <div class="toolbar">
-              <input id="searchInput" type="search" placeholder="Oyun ara..." aria-label="Oyun ara" />
-              <select id="labelFilter" aria-label="Oyun türüne göre filtrele">
-                <option value="all">Tüm kategoriler</option>
-              </select>
-              <select id="providerFilter" aria-label="Sağlayıcıya göre filtrele">
-                <option value="all">Tüm sağlayıcılar</option>
-              </select>
-            </div>
-          </div>
+            <div class="profile-shell">
+              <aside class="profile-sidebar">
+                <div id="profileMenu" class="profile-menu-grid" aria-live="polite"></div>
+              </aside>
 
-          <div id="categoryChips" class="category-chips" aria-label="Oyun kategorileri"></div>
-          <p id="apiStatus" class="api-status" role="status">Oyunlar yükleniyor...</p>
-          <div id="gameGrid" class="game-grid" aria-live="polite"></div>
-          <button id="loadMoreGames" class="load-more primary-btn" type="button" hidden>Daha fazla oyun göster</button>
-        </section>
+              <div class="profile-panel">
+                <div class="profile-card account-card">
+                  <div>
+                    <span class="mini-label">Kullanıcı</span>
+                    <h3>Gökhan Bet</h3>
+                  </div>
+                  <div class="account-stats">
+                    <div>
+                      <strong>₺12.500</strong>
+                      <span>Bakiye</span>
+                    </div>
+                    <div>
+                      <strong>1.240</strong>
+                      <span>Bonus</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="profile-card bonus-panel">
+                  <div class="section-heading compact">
+                    <p class="eyebrow alt">Bonuslar</p>
+                    <h3>Aktif teklifler</h3>
+                  </div>
+                  <div class="bonus-list">
+                    <div class="bonus-item">
+                      <span class="bonus-pill">%100</span>
+                      <div>
+                        <strong>Hoşgeldin Bonusu</strong>
+                        <p>İlk yatırımında ekstra bonus.</p>
+                      </div>
+                    </div>
+                    <div class="bonus-item">
+                      <span class="bonus-pill">₺250</span>
+                      <div>
+                        <strong>İlk Adım Paketi</strong>
+                        <p>Başlangıç için özel destek.</p>
+                      </div>
+                    </div>
+                    <div class="bonus-item">
+                      <span class="bonus-pill">VIP</span>
+                      <div>
+                        <strong>Özel Promosyon</strong>
+                        <p>Haftalık ve aylık fırsatlar.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
       </main>
     </div>
 
@@ -210,6 +136,6 @@
       </div>
     </div>
 
-    <script src="script.js?v=8"></script>
+    <script src="script.js?v=10"></script>
   </body>
 </html>

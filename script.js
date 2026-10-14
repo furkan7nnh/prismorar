@@ -3,6 +3,8 @@ const API_URL = new URL('/api/v2/games/pages/mirror/casino', SOURCE_URL);
 const GAME_LAUNCH_API_URL = new URL('/api/v1/games/launch-demo-mode/', SOURCE_URL);
 
 const gameGrid = document.getElementById('gameGrid');
+const modal = document.getElementById('gameModal');
+const modalContent = document.getElementById('modalContent');
 const searchInput = document.getElementById('searchInput');
 const providerFilter = document.getElementById('providerFilter');
 const labelFilter = document.getElementById('labelFilter');
@@ -175,27 +177,50 @@ function renderGames() {
   apiStatus.textContent = `${filteredGames.length.toLocaleString('tr-TR')} oyun gösteriliyor.`;
 }
 
-function openGameInNewTab(gameId) {
+function openGamePlayer(gameId) {
   const game = games.find((item) => item.id === gameId);
   if (!game) return;
 
-  const gameWindow = window.open('about:blank', '_blank');
-  if (!gameWindow) {
-    apiStatus.textContent = 'Oyun başlatılamadı. Tarayıcıda açılır pencerelere izin verip tekrar dene.';
-    return;
-  }
+  modal.classList.add('is-playing');
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden', 'false');
+  modalContent.innerHTML = `
+    <div class="game-player-toolbar">
+      <div>
+        <h3 id="modalTitle">${escapeHTML(game.name)}</h3>
+        <p id="playerStatus" role="status">Oyun açılıyor...</p>
+      </div>
+    </div>
+    <iframe
+      class="game-player-frame"
+      src="about:blank"
+      title="${escapeHTML(game.name)} oyunu"
+      allow="autoplay; fullscreen; gamepad"
+      allowfullscreen
+      referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  `;
 
-  gameWindow.opener = null;
+  const frame = modalContent.querySelector('.game-player-frame');
   apiStatus.textContent = `${game.name} açılıyor...`;
   requestGameLaunchUrl(game)
     .then((launchUrl) => {
-      gameWindow.location.href = launchUrl;
-      apiStatus.textContent = `${game.name} açıldı.`;
+      frame.src = launchUrl;
+      const status = modalContent.querySelector('#playerStatus');
+      if (status) status.textContent = 'Oyun yükleniyor...';
     })
     .catch((error) => {
-      gameWindow.close();
+      frame.remove();
+      const status = modalContent.querySelector('#playerStatus');
+      if (status) status.textContent = `Oyun açılamadı: ${error.message}`;
       apiStatus.textContent = `${game.name} açılamadı: ${error.message}`;
     });
+}
+
+function closeModal() {
+  modal.classList.add('hidden');
+  modal.setAttribute('aria-hidden', 'true');
+  modal.classList.remove('is-playing');
+  modalContent.replaceChildren();
 }
 
 async function loadGames() {
@@ -257,7 +282,12 @@ categoryChips.addEventListener('click', (event) => {
 document.addEventListener('click', (event) => {
   if (!(event.target instanceof Element)) return;
   const launchButton = event.target.closest('[data-launch]');
-  if (launchButton) openGameInNewTab(launchButton.dataset.launch);
+  if (launchButton) openGamePlayer(launchButton.dataset.launch);
+  if (event.target.matches('[data-close="true"]')) closeModal();
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
 });
 
 loadGames().catch((error) => console.error('Oyun kataloğu yüklenemedi.', error));

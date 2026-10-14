@@ -7,6 +7,8 @@ const CATALOG_CACHE_VERSION = 1;
 const CATALOG_REFRESH_INTERVAL = 4 * 60 * 60 * 1000;
 const EMPTY_LABELS = [];
 const EMPTY_CURRENCIES = [];
+const EMPTY_TAGS = [];
+const GAME_TAG_LABELS = new Map([['roulette', 'Rulet']]);
 
 const gameGrid = document.getElementById('gameGrid');
 const modal = document.getElementById('gameModal');
@@ -61,6 +63,15 @@ function normalizeGame(record) {
 
   if (!imagePath) return null;
 
+  const labels = Array.isArray(record.labels)
+    ? record.labels.map((label) => typeof label === 'string' ? { slug: label } : label)
+    : [];
+  const hasRouletteTag = Array.isArray(record.tags) && record.tags.includes('roulette');
+  const legacyRouletteName = !Array.isArray(record.tags) && /(?:^|[\s-])(rulet|roulette)(?:$|[\s-])/i.test(name);
+  if ((hasRouletteTag || legacyRouletteName) && !labels.some((label) => label.slug === 'roulette')) {
+    labels.push({ slug: 'roulette' });
+  }
+
   return {
     id: record.id,
     name,
@@ -70,9 +81,7 @@ function normalizeGame(record) {
     supportedCurrencies: Array.isArray(record.supported_currencies)
       ? record.supported_currencies
       : EMPTY_CURRENCIES,
-    labels: Array.isArray(record.labels)
-      ? record.labels.map((label) => typeof label === 'string' ? { slug: label } : label)
-      : EMPTY_LABELS
+    labels: labels.length ? labels : EMPTY_LABELS
   };
 }
 
@@ -176,7 +185,10 @@ function createCatalogData(data) {
           supported_currencies: currency ? [currency] : [],
           labels: (record.labels || [])
             .filter((label) => label.slug !== 'all')
-            .map(({ slug }) => slug)
+            .map(({ slug }) => slug),
+          tags: Array.isArray(record.tags)
+            ? record.tags.filter((tag) => GAME_TAG_LABELS.has(tag))
+            : EMPTY_TAGS
         };
       })
       .filter((record) => record.id && record.name && record.provider_name && record.cover_image)
@@ -407,7 +419,13 @@ function closeModal() {
 function displayCatalog(data) {
   games = data.games.map(normalizeGame).filter(Boolean);
   catalogProviders = data.providers || [];
-  catalogLabels = data.labels || [];
+  catalogLabels = [...(data.labels || [])];
+  const catalogLabelSlugs = new Set(catalogLabels.map((label) => label.slug));
+  for (const [slug, name] of GAME_TAG_LABELS) {
+    if (games.some((game) => game.labels.some((label) => label.slug === slug)) && !catalogLabelSlugs.has(slug)) {
+      catalogLabels.push({ slug, name });
+    }
+  }
   populateFilters(catalogProviders, catalogLabels);
   gameTotal.textContent = games.length.toLocaleString('tr-TR');
   availableTotal.textContent = games.filter((game) => game.demoSupported).length.toLocaleString('tr-TR');

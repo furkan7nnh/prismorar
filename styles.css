@@ -234,6 +234,32 @@ input {
   font-size: 1.2rem;
 }
 
+.home-brand-copy {
+  display: grid;
+  gap: 3px;
+}
+
+.home-brand-name {
+  margin: 0;
+  color: #f1f6ff;
+  font-size: clamp(1.05rem, 2vw, 1.45rem);
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: 0.025em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.home-brand-name span {
+  color: #39c5ff;
+}
+
+.home-brand-subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
 .main-nav {
   display: flex;
   align-items: center;

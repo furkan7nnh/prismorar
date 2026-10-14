@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GameHub | Oyunlar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="brand-wrap">
+          <div class="brand-mark">G</div>
+          <div>
+            <p class="eyebrow">GameHub</p>
+            <h1>Oyun Merkezi</h1>
+          </div>
+        </div>
+
+        <nav class="main-nav" aria-label="Ana menü">
+          <a href="#">Anasayfa</a>
+          <a href="#games">Oyunlar</a>
+          <a href="#featured">Öne Çıkan</a>
+          <a href="#">İletişim</a>
+        </nav>
+
+      </header>
+
+      <main>
+        <section class="hero" id="featured">
+          <div class="hero-copy">
+            <span class="pill">Katalog</span>
+            <h2>Casino oyunlarını keşfet.</h2>
+            <p>
+              Oyun adları, sağlayıcılar ve görseller anlık olarak katalogdan yüklenir.
+            </p>
+            <div class="hero-actions">
+              <a class="primary-btn" href="#games">Kataloğu gör</a>
+              <a class="secondary-btn" href="#games">Gözat</a>
+            </div>
+            <div class="stats">
+              <div>
+                <strong id="gameTotal">...</strong>
+                <span>Oyun</span>
+              </div>
+              <div>
+                <strong id="availableTotal">...</strong>
+                <span>Kullanılabilir</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="hero-showcase" aria-label="Öne çıkan oyunlar">
+            <a class="showcase-card large" href="#games">
+              <span class="tag">Popüler</span>
+              <h3>Sweet Powernudge</h3>
+              <p>Pragmatic Play · Slot</p>
+            </a>
+            <a class="showcase-card small accent-one" href="#games">
+              <span class="tag">Oyun</span>
+              <h3>Sugar Rush Dice</h3>
+            </a>
+            <a class="showcase-card small accent-two" href="#games">
+              <span class="tag">Oyun</span>
+              <h3>Sweet Bonanza 1000</h3>
+            </a>
+          </div>
+        </section>
+
+        <section class="catalog" id="games">
+          <div class="catalog-header">
+            <div>
+              <p class="eyebrow alt">Katalog</p>
+              <h2>Oyun kataloğu</h2>
+            </div>
+
+            <div class="toolbar">
+              <input id="searchInput" type="search" placeholder="Oyun ara..." aria-label="Oyun ara" />
+              <select id="labelFilter" aria-label="Oyun türüne göre filtrele">
+                <option value="all">Tüm kategoriler</option>
+              </select>
+              <select id="providerFilter" aria-label="Sağlayıcıya göre filtrele">
+                <option value="all">Tüm sağlayıcılar</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="categoryChips" class="category-chips" aria-label="Oyun kategorileri"></div>
+          <p id="apiStatus" class="api-status" role="status">Oyunlar yükleniyor...</p>
+          <div id="gameGrid" class="game-grid" aria-live="polite"></div>
+        </section>
+      </main>
+    </div>
+
+    <div id="gameModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-backdrop" data-close="true"></div>
+      <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <button class="close-btn" aria-label="Kapat" data-close="true">×</button>
+        <div id="modalContent"></div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

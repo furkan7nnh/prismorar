@@ -1,6 +1,8 @@
 const SOURCE_URL = 'https://multiwin223.com/';
 const API_URL = new URL('/api/v2/games/pages/mirror/casino', SOURCE_URL);
 const GAME_LAUNCH_API_URL = new URL('/api/v1/games/launch-demo-mode/', SOURCE_URL);
+const EMPTY_LABELS = [];
+const EMPTY_CURRENCIES = [];
 
 const gameGrid = document.getElementById('gameGrid');
 const modal = document.getElementById('gameModal');
@@ -15,9 +17,16 @@ const gameTotal = document.getElementById('gameTotal');
 const availableTotal = document.getElementById('availableTotal');
 const featuredCards = document.querySelectorAll('[data-featured-game]');
 
-const GAME_BATCH_SIZE = 48;
+const DESKTOP_GAME_BATCH_SIZE = 48;
+const MOBILE_GAME_BATCH_SIZE = 12;
 let games = [];
-let visibleGameCount = GAME_BATCH_SIZE;
+let visibleGameCount = getGameBatchSize();
+
+function getGameBatchSize() {
+  return window.matchMedia('(max-width: 720px)').matches
+    ? MOBILE_GAME_BATCH_SIZE
+    : DESKTOP_GAME_BATCH_SIZE;
+}
 
 function escapeHTML(value) {
   return String(value).replace(/[&<>"']/g, (character) => ({
@@ -47,13 +56,12 @@ function normalizeGame(record) {
     id: record.id,
     name,
     provider: record.provider_name,
-    product: record.product_slug || 'casino',
-    image: imagePath ? new URL(imagePath, SOURCE_URL).href : '',
+    image: imagePath || '',
     demoSupported: record.demo_mode_supported === true,
-    supportedCurrencies: Array.isArray(record.supported_currencies) ? record.supported_currencies : [],
-    labels: (record.labels || [])
-      .filter((label) => label.slug !== 'all')
-      .map((label) => ({ slug: label.slug, name: getLocalizedName(label.name) }))
+    supportedCurrencies: Array.isArray(record.supported_currencies)
+      ? record.supported_currencies
+      : EMPTY_CURRENCIES,
+    labels: Array.isArray(record.labels) ? record.labels : EMPTY_LABELS
   };
 }
 
@@ -102,6 +110,14 @@ function populateFilters(providers, labels) {
   const categoryOptions = labels
     .filter((label) => label.slug !== 'all' && getLocalizedName(label.name))
     .sort((a, b) => (a.position ?? a.order ?? 0) - (b.position ?? b.order ?? 0));
+  const categoryCounts = new Map();
+  games.forEach((game) => {
+    game.labels.forEach((label) => {
+      if (label.slug !== 'all') {
+        categoryCounts.set(label.slug, (categoryCounts.get(label.slug) || 0) + 1);
+      }
+    });
+  });
   labelFilter.insertAdjacentHTML(
     'beforeend',
     categoryOptions.map((label) => `<option value="${escapeHTML(label.slug)}">${escapeHTML(getLocalizedName(label.name))}</option>`).join('')
@@ -110,7 +126,7 @@ function populateFilters(providers, labels) {
     '<button class="category-chip active" type="button" data-category="all">Tüm kategoriler</button>',
     ...categoryOptions.map((label) => {
       const categoryName = getLocalizedName(label.name);
-      const count = games.filter((game) => game.labels.some((gameLabel) => gameLabel.slug === label.slug)).length;
+      const count = categoryCounts.get(label.slug) || 0;
       return `<button class="category-chip" type="button" data-category="${escapeHTML(label.slug)}">${escapeHTML(categoryName)} <span>${count.toLocaleString('tr-TR')}</span></button>`;
     })
   ].join('');
@@ -122,7 +138,8 @@ function getFilteredGames() {
   const selectedLabel = labelFilter.value;
 
   return games.filter((game) => {
-    const matchesSearch = game.name.toLocaleLowerCase('tr').includes(searchTerm)
+    const matchesSearch = !searchTerm
+      || game.name.toLocaleLowerCase('tr').includes(searchTerm)
       || game.provider.toLocaleLowerCase('tr').includes(searchTerm);
     const matchesProvider = selectedProvider === 'all' || game.provider === selectedProvider;
     const matchesLabel = selectedLabel === 'all' || game.labels.some((label) => label.slug === selectedLabel);
@@ -140,7 +157,7 @@ function renderFeaturedGames() {
       return;
     }
 
-    image.src = game.image;
+    image.src = new URL(game.image, SOURCE_URL).href;
     image.alt = `${game.name} oyun görseli`;
   });
 }
@@ -157,8 +174,8 @@ function renderGames() {
   gameGrid.innerHTML = visibleGames.map((game) => `
     <article class="game-card">
       <div class="game-card-art">
-        ${game.image ? `<img class="game-art-image" src="${escapeHTML(game.image)}" alt="${escapeHTML(game.name)} oyun görseli" loading="lazy">` : ''}
-        <span class="tag">${escapeHTML(game.labels[0]?.name || 'Casino')}</span>
+        ${game.image ? `<img class="game-art-image" src="${escapeHTML(new URL(game.image, SOURCE_URL).href)}" alt="${escapeHTML(game.name)} oyun görseli" loading="lazy" decoding="async">` : ''}
+        <span class="tag">${escapeHTML(getLocalizedName(game.labels.find((label) => label.slug !== 'all')?.name) || 'Casino')}</span>
       </div>
       <div class="game-card-content">
         <div class="meta">
@@ -275,22 +292,22 @@ async function loadGames() {
 }
 
 searchInput.addEventListener('input', () => {
-  visibleGameCount = GAME_BATCH_SIZE;
+  visibleGameCount = getGameBatchSize();
   renderGames();
 });
 
 providerFilter.addEventListener('change', () => {
-  visibleGameCount = GAME_BATCH_SIZE;
+  visibleGameCount = getGameBatchSize();
   renderGames();
 });
 
 labelFilter.addEventListener('change', () => {
-  visibleGameCount = GAME_BATCH_SIZE;
+  visibleGameCount = getGameBatchSize();
   renderGames();
 });
 
 loadMoreButton.addEventListener('click', () => {
-  visibleGameCount += GAME_BATCH_SIZE;
+  visibleGameCount += getGameBatchSize();
   renderGames();
 });
 
@@ -299,7 +316,7 @@ categoryChips.addEventListener('click', (event) => {
   const chip = event.target.closest('[data-category]');
   if (!chip) return;
   labelFilter.value = chip.dataset.category;
-  visibleGameCount = GAME_BATCH_SIZE;
+  visibleGameCount = getGameBatchSize();
   renderGames();
 });
 

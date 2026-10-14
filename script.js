@@ -9,6 +9,36 @@ const EMPTY_LABELS = [];
 const EMPTY_CURRENCIES = [];
 const EMPTY_TAGS = [];
 const GAME_TAG_LABELS = new Map([['roulette', 'Rulet']]);
+const PAYMENT_METHODS = [
+  {
+    name: 'Multiwin Kripto',
+    type_name: 'CRYPTO',
+    min_deposit: 0,
+    max_deposit: null,
+    description: 'Kripto ile hızlı ve güvenli yatırım.'
+  },
+  {
+    name: 'Multiwin Havale',
+    type_name: 'BANKING',
+    min_deposit: 100,
+    max_deposit: 5000000,
+    description: 'Havale / EFT ile doğrudan yatırma.'
+  },
+  {
+    name: 'Ecopayz',
+    type_name: 'Ecopays',
+    min_deposit: 100,
+    max_deposit: 5000000,
+    description: 'Elektronik cüzdan ile anında işlem.'
+  },
+  {
+    name: 'Parakart',
+    type_name: 'PARAKART',
+    min_deposit: 100,
+    max_deposit: 5000000,
+    description: 'Kısa süreli ve güvenli ödeme seçeneği.'
+  }
+];
 
 const gameGrid = document.getElementById('gameGrid');
 const modal = document.getElementById('gameModal');
@@ -294,6 +324,30 @@ function getFilteredGames() {
   });
 }
 
+function renderPaymentMethods() {
+  const paymentContainer = document.getElementById('paymentMethods');
+  if (!paymentContainer) return;
+
+  paymentContainer.innerHTML = PAYMENT_METHODS.map((method) => {
+    const minDeposit = method.min_deposit > 0 ? `${method.min_deposit.toLocaleString('tr-TR')} ₺` : 'Özel tutar';
+    const maxDeposit = method.max_deposit ? `${method.max_deposit.toLocaleString('tr-TR')} ₺` : 'Limitsiz';
+    return `
+      <article class="payment-card">
+        <div class="payment-head">
+          <span class="payment-type">${escapeHTML(method.type_name)}</span>
+          <span class="payment-icon">${escapeHTML(method.name.charAt(0).toUpperCase())}</span>
+        </div>
+        <h3>${escapeHTML(method.name)}</h3>
+        <p>${escapeHTML(method.description)}</p>
+        <div class="payment-meta">
+          <span>Min: ${escapeHTML(minDeposit)}</span>
+          <span>Max: ${escapeHTML(maxDeposit)}</span>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
 function renderFeaturedGames() {
   featuredCards.forEach((card) => {
     const featuredName = card.dataset.featuredGame.toLocaleLowerCase('tr');
@@ -528,4 +582,5 @@ document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
 });
 
+renderPaymentMethods();
 loadGames().catch((error) => console.error('Oyun kataloğu yüklenemedi.', error));

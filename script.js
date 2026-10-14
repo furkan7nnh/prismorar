@@ -201,6 +201,10 @@ function openGamePlayer(gameId) {
   `;
 
   const frame = modalContent.querySelector('.game-player-frame');
+  frame.addEventListener('load', () => {
+    const status = modalContent.querySelector('#playerStatus');
+    if (status) status.textContent = 'Oyun açıldı.';
+  }, { once: true });
   apiStatus.textContent = `${game.name} açılıyor...`;
   requestGameLaunchUrl(game)
     .then((launchUrl) => {

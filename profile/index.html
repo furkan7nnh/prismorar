@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gökhan Bet | Profil</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../styles.css?v=13" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="brand-wrap">
+          <div class="brand-mark">GB</div>
+          <div>
+            <p class="eyebrow">Gökhan Bet</p>
+            <h1>Profil</h1>
+          </div>
+        </div>
+
+        <nav class="main-nav" aria-label="Ana menü">
+          <a href="../index.html#home">Anasayfa</a>
+          <a href="../index.html#games">Oyunlar</a>
+          <a href="./">Profil</a>
+          <a href="../login.html#login" class="nav-cta">Giriş yap</a>
+          <a href="../login.html#register" class="nav-cta alt">Hesap oluştur</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="profile-view" id="profile" aria-live="polite">
+          <div class="profile-hero">
+            <div>
+              <p class="eyebrow alt">Hesap</p>
+              <h2>Profil</h2>
+            </div>
+            <a class="secondary-btn" href="../index.html">Ana sayfaya dön</a>
+          </div>
+
+          <div class="profile-shell">
+            <aside class="profile-sidebar">
+              <div id="profileMenu" class="profile-menu-grid" aria-live="polite"></div>
+            </aside>
+
+            <div class="profile-panel">
+              <div class="profile-card account-card">
+                <div>
+                  <span class="mini-label">Kullanıcı</span>
+                  <h3>Gökhan Bet</h3>
+                </div>
+                <div class="account-stats">
+                  <div>
+                    <strong>₺12.500</strong>
+                    <span>Bakiye</span>
+                  </div>
+                  <div>
+                    <strong>1.240</strong>
+                    <span>Bonus</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="profile-card bonus-panel">
+                <div class="section-heading compact">
+                  <p class="eyebrow alt">Bonuslar</p>
+                  <h3>Aktif teklifler</h3>
+                </div>
+                <div class="bonus-list">
+                  <div class="bonus-item">
+                    <span class="bonus-pill">%100</span>
+                    <div>
+                      <strong>Hoşgeldin Bonusu</strong>
+                      <p>İlk yatırımında ekstra bonus.</p>
+                    </div>
+                  </div>
+                  <div class="bonus-item">
+                    <span class="bonus-pill">₺250</span>
+                    <div>
+                      <strong>İlk Adım Paketi</strong>
+                      <p>Başlangıç için özel destek.</p>
+                    </div>
+                  </div>
+                  <div class="bonus-item">
+                    <span class="bonus-pill">VIP</span>
+                    <div>
+                      <strong>Özel Promosyon</strong>
+                      <p>Haftalık ve aylık fırsatlar.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const profileItems = [
+        ['Detaylar', '/profile/details'],
+        ['Güvenlik', '/profile/security'],
+        ['Şifre Değiştir', '/profile/security/change-password'],
+        ['Cihazlar', '/profile/security/devices'],
+        ['KYC Doğrulaması', '/profile/security/kyc-verification'],
+        ['Bankacılık', '/profile/financial'],
+        ['Para Yatırma', '/profile/financial/deposit'],
+        ['Para Çekme', '/profile/financial/withdrawal'],
+        ['Ödeme Hesaplarım', '/profile/financial/my-payment-accounts'],
+        ['Ödemeler', '/profile/payments'],
+        ['Geçmiş', '/profile/history'],
+        ['Teklifler', '/profile/offers'],
+        ['Makbuz Gönder', '/profile/financial/send-receipt'],
+        ['Oyun Oturumları', '/profile/gameplay-sessions'],
+        ['Bildirimler', '/profile/notifications'],
+        ['Bonus Promosyon Kodu', '/profile/bonus/promocode'],
+        ['Sorumlu Bahis', '/profile/responsible-betting'],
+        ['Çıkış Yap', '/profile/logout'],
+        ['2FA Doğrulaması', '/profile/security/2fa'],
+        ['Arkadaş Davet Et', '/profile/invite-friends'],
+        ['Arama Talep Et', '/profile/request-call']
+      ];
+      const profileMenu = document.getElementById('profileMenu');
+      profileItems.forEach(([title, url]) => {
+        const link = document.createElement('a');
+        link.className = 'profile-menu-item';
+        link.href = url;
+        const label = document.createElement('span');
+        label.textContent = title;
+        const arrow = document.createElement('strong');
+        arrow.textContent = '›';
+        link.append(label, arrow);
+        profileMenu.append(link);
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gökhan Bet | Giriş</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css?v=13" />
+  </head>
+  <body>
+    <main class="auth-page">
+      <section class="auth-dialog" aria-label="Giriş veya hesap oluşturma">
+        <aside class="auth-brand-panel" aria-label="Gökhan Bet">
+          <a class="auth-brand" href="index.html" aria-label="Gökhan Bet ana sayfa">
+            <span class="auth-brand-mark" aria-hidden="true">GB</span>
+            <span>GÖKHAN<span>BET</span></span>
+          </a>
+          <p class="auth-brand-caption">Oyun dünyana güvenle devam et.</p>
+        </aside>
+
+        <section class="auth-content">
+          <header class="auth-dialog-header">
+            <div class="auth-heading-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5Z" />
+              </svg>
+            </div>
+            <div class="auth-heading-copy">
+              <h1 id="authTitle">Hoş geldiniz!</h1>
+              <p id="authSubtitle">Giriş bilgilerinizle hesabınıza girin.</p>
+            </div>
+            <a class="auth-close" href="index.html" aria-label="Kapat">×</a>
+          </header>
+
+          <div id="loginPanel" class="auth-panel">
+            <form id="loginForm" class="auth-form" data-auth-form="login">
+              <label class="auth-field" for="loginName">
+                <span>Kullanıcı Adı <b>*</b></span>
+                <span class="auth-input-wrap">
+                  <span class="auth-input-icon" aria-hidden="true">●</span>
+                  <input id="loginName" name="username" type="text" placeholder="Kullanıcı adınızı girin" autocomplete="username" required />
+                </span>
+              </label>
+
+              <label class="auth-field" for="loginPassword">
+                <span>Şifre <b>*</b></span>
+                <span class="auth-input-wrap">
+                  <span class="auth-input-icon auth-lock-icon" aria-hidden="true">▣</span>
+                  <input id="loginPassword" name="password" type="password" placeholder="Şifrenizi girin" autocomplete="current-password" required />
+                  <button class="password-toggle" type="button" data-toggle-password="loginPassword" aria-label="Şifreyi göster">Göster</button>
+                </span>
+              </label>
+
+              <div class="auth-options">
+                <label class="auth-remember">
+                  <input name="remember_me" type="checkbox" />
+                  <span>Gelecekteki girişler için beni hatırla!</span>
+                </label>
+                <a class="auth-forgot" href="#forgot-password" data-auth-message="Şifre yenileme için hesap sunucusu bağlantısı gerekli.">Şifremi unuttum</a>
+              </div>
+              <p class="auth-feedback" id="loginFeedback" role="status" aria-live="polite" hidden></p>
+            </form>
+            <div class="auth-actions">
+              <button class="auth-join-button" type="button" data-show-auth="register">Şimdi Katıl <span aria-hidden="true">♙</span></button>
+              <button class="auth-login-button" type="submit" form="loginForm">Giriş Yap <span aria-hidden="true">›</span></button>
+            </div>
+          </div>
+
+          <div id="registerPanel" class="auth-panel" hidden>
+            <form id="registerForm" class="auth-form" data-auth-form="register">
+              <label class="auth-field" for="registerName">
+                <span>Kullanıcı Adı <b>*</b></span>
+                <span class="auth-input-wrap">
+                  <span class="auth-input-icon" aria-hidden="true">●</span>
+                  <input id="registerName" name="username" type="text" placeholder="Kullanıcı adınızı oluşturun" autocomplete="username" minlength="3" required />
+                </span>
+              </label>
+
+              <label class="auth-field" for="registerEmail">
+                <span>E-posta <b>*</b></span>
+                <span class="auth-input-wrap">
+                  <span class="auth-input-icon" aria-hidden="true">@</span>
+                  <input id="registerEmail" name="email" type="email" placeholder="E-posta adresinizi girin" autocomplete="email" required />
+                </span>
+              </label>
+
+              <label class="auth-field" for="registerPassword">
+                <span>Şifre <b>*</b></span>
+                <span class="auth-input-wrap">
+                  <span class="auth-input-icon auth-lock-icon" aria-hidden="true">▣</span>
+                  <input id="registerPassword" name="password" type="password" placeholder="En az 8 karakter" autocomplete="new-password" minlength="8" required />
+                </span>
+              </label>
+
+              <label class="auth-field" for="confirmPassword">
+                <span>Şifreyi doğrula <b>*</b></span>
+                <span class="auth-input-wrap">
+                  <span class="auth-input-icon auth-lock-icon" aria-hidden="true">▣</span>
+                  <input id="confirmPassword" name="confirmPassword" type="password" placeholder="Şifrenizi tekrar girin" autocomplete="new-password" minlength="8" required />
+                </span>
+              </label>
+
+              <label class="auth-remember auth-register-terms">
+                <input name="terms" type="checkbox" required />
+                <span>Koşulları ve gizlilik politikasını kabul ediyorum.</span>
+              </label>
+              <p class="auth-feedback" id="registerFeedback" role="status" aria-live="polite" hidden></p>
+            </form>
+            <div class="auth-actions">
+              <button class="auth-join-button" type="button" data-show-auth="login">Girişe dön</button>
+              <button class="auth-login-button" type="submit" form="registerForm">Hesap Oluştur <span aria-hidden="true">›</span></button>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+    <script>
+      const authPanels = {
+        login: document.getElementById('loginPanel'),
+        register: document.getElementById('registerPanel')
+      };
+
+      function showAuthPanel(panelName, updateHash = true) {
+        const selectedPanel = panelName === 'register' ? 'register' : 'login';
+        Object.entries(authPanels).forEach(([name, panel]) => {
+          panel.hidden = name !== selectedPanel;
+        });
+        document.getElementById('authTitle').textContent = selectedPanel === 'register' ? 'Hesap oluşturun' : 'Hoş geldiniz!';
+        document.getElementById('authSubtitle').textContent = selectedPanel === 'register'
+          ? 'Yeni hesabınızı oluşturmak için bilgilerinizi girin.'
+          : 'Giriş bilgilerinizle hesabınıza girin.';
+        if (updateHash && window.location.hash !== `#${selectedPanel}`) {
+          history.pushState(null, '', `#${selectedPanel}`);
+        }
+      }
+
+      document.querySelectorAll('[data-show-auth]').forEach((button) => {
+        button.addEventListener('click', () => showAuthPanel(button.dataset.showAuth));
+      });
+      window.addEventListener('popstate', () => showAuthPanel(window.location.hash === '#register' ? 'register' : 'login', false));
+      document.querySelectorAll('[data-toggle-password]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const input = document.getElementById(button.dataset.togglePassword);
+          const showPassword = input.type === 'password';
+          input.type = showPassword ? 'text' : 'password';
+          button.textContent = showPassword ? 'Gizle' : 'Göster';
+          button.setAttribute('aria-label', showPassword ? 'Şifreyi gizle' : 'Şifreyi göster');
+        });
+      });
+      document.querySelectorAll('[data-auth-form]').forEach((form) => {
+        form.addEventListener('submit', (event) => {
+          event.preventDefault();
+          if (!form.reportValidity()) return;
+          const feedbackId = form.dataset.authForm === 'register' ? 'registerFeedback' : 'loginFeedback';
+          const feedback = document.getElementById(feedbackId);
+          if (form.dataset.authForm === 'register') {
+            const password = form.elements.password.value;
+            const confirmation = form.elements.confirmPassword.value;
+            if (password !== confirmation) {
+              feedback.textContent = 'Şifreler eşleşmiyor.';
+              feedback.hidden = false;
+              form.elements.confirmPassword.focus();
+              return;
+            }
+          }
+          feedback.textContent = 'Bu demo ekranda hesap işlemleri etkin değil. Giriş ve kayıt için güvenli bir hesap sunucusu bağlantısı gerekir.';
+          feedback.hidden = false;
+        });
+      });
+      document.querySelectorAll('[data-auth-message]').forEach((link) => {
+        link.addEventListener('click', (event) => {
+          event.preventDefault();
+          const feedback = document.getElementById('loginFeedback');
+          feedback.textContent = link.dataset.authMessage;
+          feedback.hidden = false;
+        });
+      });
+
+      showAuthPanel(window.location.hash === '#register' ? 'register' : 'login', false);
+    </script>
+  </body>
+</html>

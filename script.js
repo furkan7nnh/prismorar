@@ -1,5 +1,5 @@
 const SOURCE_URL = 'https://multiwin223.com/';
-const GAME_LAUNCH_API_URL = new URL('/api/v1/games/launch-demo-mode/', SOURCE_URL);
+const GAME_LAUNCH_PROXY_URL = 'https://prismorar-game-launch.mylocasyon.workers.dev/api/game-launch/';
 const CATALOG_URL = new URL('catalog.json?v=7', document.baseURI);
 const CATALOG_CACHE_NAME = 'prismorar-catalog';
 const CATALOG_CACHE_VERSION = 1;
@@ -208,7 +208,7 @@ async function requestGameLaunchUrl(game) {
     throw new Error('Bu oyun için erişim uygun değil.');
   }
 
-  const launchUrl = new URL(encodeURIComponent(game.id), GAME_LAUNCH_API_URL);
+  const launchUrl = new URL(encodeURIComponent(game.id), GAME_LAUNCH_PROXY_URL);
   const currency = game.supportedCurrencies.includes('USD')
     ? 'USD'
     : game.supportedCurrencies[0];

@@ -6,6 +6,8 @@ const ALLOWED_ORIGINS = new Set([
 const GAME_ID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const CURRENCY_PATTERN = /^[A-Z]{3}$/;
+const PROVIDER_HOSTS = new Set(['multiwin223.com', 'multiwin224.com']);
+const MAX_PROVIDER_REDIRECTS = 3;
 
 function jsonResponse(body, status, origin) {
   const headers = new Headers({
@@ -22,6 +24,37 @@ function jsonResponse(body, status, origin) {
   }
 
   return new Response(JSON.stringify(body), { status, headers });
+}
+
+async function fetchProvider(url, headers) {
+  for (let redirectCount = 0; redirectCount <= MAX_PROVIDER_REDIRECTS; redirectCount += 1) {
+    const response = await fetch(url, { headers, redirect: 'manual' });
+    if (response.status < 300 || response.status >= 400) {
+      return response;
+    }
+
+    const location = response.headers.get('Location');
+    if (!location || redirectCount === MAX_PROVIDER_REDIRECTS) {
+      return null;
+    }
+
+    const redirectUrl = new URL(location, url);
+    if (
+      redirectUrl.protocol !== 'https:' ||
+      !PROVIDER_HOSTS.has(redirectUrl.hostname) ||
+      (redirectUrl.port && redirectUrl.port !== '443') ||
+      redirectUrl.username ||
+      redirectUrl.password ||
+      redirectUrl.pathname !== url.pathname ||
+      redirectUrl.searchParams.get('currency') !== url.searchParams.get('currency') ||
+      redirectUrl.searchParams.get('language') !== url.searchParams.get('language')
+    ) {
+      return null;
+    }
+    url = redirectUrl;
+  }
+
+  return null;
 }
 
 export default {
@@ -83,10 +116,18 @@ export default {
 
     let providerResponse;
     try {
-      providerResponse = await fetch(providerUrl, {
-        headers: { Accept: 'application/json' },
-        redirect: 'error',
+      providerResponse = await fetchProvider(providerUrl, {
+        Accept: 'application/json',
+        Origin: origin,
+        Referer: `${origin}/`,
       });
+      if (!providerResponse) {
+        return jsonResponse(
+          { success: false, message: 'Oyun sağlayıcısı güvenli olmayan bir yönlendirme yaptı.' },
+          502,
+          origin,
+        );
+      }
     } catch (error) {
       console.error('Game provider request failed:', error);
       return jsonResponse(

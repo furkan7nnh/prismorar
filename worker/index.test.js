@@ -48,8 +48,12 @@ test('handles CORS preflight without contacting the provider', async () => {
 test('proxies the demo launch and returns the secure game URL', async (context) => {
   const originalFetch = globalThis.fetch;
   let upstreamUrl;
-  globalThis.fetch = async (input) => {
+  let upstreamHeaders;
+  let redirectMode;
+  globalThis.fetch = async (input, init) => {
     upstreamUrl = new URL(input);
+    upstreamHeaders = new Headers(init.headers);
+    redirectMode = init.redirect;
     return Response.json({ success: true, data: { url: 'https://games.example/session/123' } });
   };
   context.after(() => {
@@ -63,9 +67,52 @@ test('proxies the demo launch and returns the secure game URL', async (context) 
   assert.equal(upstreamUrl.pathname, `/api/v1/games/launch-demo-mode/${gameId}`);
   assert.equal(upstreamUrl.searchParams.get('currency'), 'USD');
   assert.equal(upstreamUrl.searchParams.get('language'), 'tr');
+  assert.equal(redirectMode, 'manual');
+  assert.equal(upstreamHeaders.get('Accept'), 'application/json');
+  assert.equal(upstreamHeaders.get('Origin'), origin);
+  assert.equal(upstreamHeaders.get('Referer'), `${origin}/`);
   assert.deepEqual(await response.json(), {
     success: true,
     data: { url: 'https://games.example/session/123' },
+  });
+});
+
+test('follows HTTPS redirects only to the approved provider domains', async (context) => {
+  const originalFetch = globalThis.fetch;
+  let requestCount = 0;
+  globalThis.fetch = async (input, init) => {
+    requestCount += 1;
+    assert.equal(init.redirect, 'manual');
+    if (requestCount === 1) {
+      return Response.redirect(
+        `https://multiwin224.com${new URL(input).pathname}${new URL(input).search}`,
+      );
+    }
+    assert.equal(new URL(input).origin, 'https://multiwin224.com');
+    return Response.json({ success: true, data: { url: 'https://games.example/session/123' } });
+  };
+  context.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  const response = await worker.fetch(launchRequest());
+  assert.equal(response.status, 200);
+  assert.equal(requestCount, 2);
+});
+
+test('rejects redirects outside the approved provider domains', async (context) => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () =>
+    Response.redirect('https://attacker.example/api/v1/games/launch-demo-mode/example');
+  context.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  const response = await worker.fetch(launchRequest());
+  assert.equal(response.status, 502);
+  assert.deepEqual(await response.json(), {
+    success: false,
+    message: 'Oyun sağlayıcısı güvenli olmayan bir yönlendirme yaptı.',
   });
 });
 

@@ -1,7 +1,7 @@
 const SOURCE_URL = 'https://multiwin223.com/';
 const GAME_LAUNCH_PROXY_URL = 'https://prismorar-game-launch.mylocasyon.workers.dev/api/game-launch/';
 const LIVE_CASINO_API_URL = new URL('/api/live-casino', GAME_LAUNCH_PROXY_URL);
-const LIVE_CASINO_PAGE_URL = 'https://multiwin224.com/games/live_casino';
+const LIVE_GAME_LAUNCH_URL = new URL('/api/live-casino/launch', GAME_LAUNCH_PROXY_URL);
 const liveCasinoGrid = document.getElementById('liveCasinoGrid');
 const liveCasinoStatus = document.getElementById('liveCasinoStatus');
 const liveCasinoSearch = document.getElementById('liveCasinoSearch');
@@ -247,6 +247,29 @@ async function requestGameLaunchUrl(game) {
   return parsedGameUrl.href;
 }
 
+async function requestLiveGameLaunchUrl(game) {
+  const response = await fetch(LIVE_GAME_LAUNCH_URL, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json'
+    },
+    credentials: 'omit',
+    body: JSON.stringify({ game_id: game.id })
+  });
+  const payload = await response.json();
+  const gameUrl = payload?.data?.url;
+  if (!response.ok || payload?.success !== true || typeof gameUrl !== 'string') {
+    throw new Error(payload?.message || `Masa başlatılamadı (HTTP ${response.status}).`);
+  }
+
+  const parsedGameUrl = new URL(gameUrl);
+  if (parsedGameUrl.protocol !== 'https:' || parsedGameUrl.username || parsedGameUrl.password) {
+    throw new Error('Launch API güvenli olmayan bir oyun adresi döndürdü.');
+  }
+  return parsedGameUrl.href;
+}
+
 function populateFilters(providers, labels) {
   const previousProvider = providerFilter.value;
   const previousLabel = labelFilter.value;
@@ -427,8 +450,8 @@ function renderLiveCasinoCard(game) {
         <h3>${escapeHTML(game.name)}</h3>
         <div class="game-card-footer">
           <span class="source-game-id" title="Oyun kimliği">${escapeHTML(game.id)}</span>
-          <button class="play-btn live-game-link" type="button" data-live-casino-open>
-            Lobide masalar&#305; a&#231;
+          <button class="play-btn live-game-link" type="button" data-live-casino-open="${escapeHTML(game.id)}">
+            Masayı Prismorar'da aç
           </button>
         </div>
       </div>
@@ -509,8 +532,10 @@ if (loadMoreLiveCasinoButton) {
 if (liveCasinoGrid) {
   liveCasinoGrid.addEventListener('click', (event) => {
     if (!(event.target instanceof Element)) return;
-    if (!event.target.closest('[data-live-casino-open]')) return;
-    openLiveCasinoLobby();
+    const launchButton = event.target.closest('[data-live-casino-open]');
+    if (!launchButton) return;
+    const game = liveCasinoGames.find((item) => item.id === launchButton.dataset.liveCasinoOpen);
+    if (game) openLiveCasinoGame(game);
   });
 
   loadLiveCasinoGames().catch((error) => {
@@ -519,10 +544,16 @@ if (liveCasinoGrid) {
 }
 
 if (openLiveCasinoLobbyButton) {
-  openLiveCasinoLobbyButton.addEventListener('click', openLiveCasinoLobby);
+  openLiveCasinoLobbyButton.addEventListener('click', () => {
+    if (liveCasinoGames[0]) {
+      openLiveCasinoGame(liveCasinoGames[0]);
+    } else if (liveCasinoStatus) {
+      liveCasinoStatus.textContent = 'Masa listesi henüz yüklenmedi. Biraz sonra tekrar dene.';
+    }
+  });
 }
 
-function openLiveCasinoLobby() {
+async function openLiveCasinoGame(game) {
   if (!modal || !modalContent) return;
 
   modal.classList.add('is-playing');
@@ -531,26 +562,31 @@ function openLiveCasinoLobby() {
   modalContent.innerHTML = `
     <div class="game-player-toolbar">
       <div>
-        <h3 id="modalTitle">Canl&#305; Casino Lobisi</h3>
-        <p id="liveCasinoLobbyStatus" role="status">Lobi bu pencerede açılır. Oynamak için sağlayıcı hesabıyla giriş gerekebilir.</p>
+        <h3 id="modalTitle">${escapeHTML(game.name)}</h3>
+        <p id="liveCasinoLobbyStatus" role="status">Masa Prismorar içinde başlatılıyor...</p>
       </div>
     </div>
     <iframe
       class="game-player-frame"
-      src="${LIVE_CASINO_PAGE_URL}"
-      title="Canl&#305; casino masalar&#305;"
+      title="${escapeHTML(game.name)} canlı casino masası"
       allow="autoplay; fullscreen; picture-in-picture"
       allowfullscreen
-      referrerpolicy="strict-origin-when-cross-origin"
+      referrerpolicy="no-referrer"
       sandbox="allow-forms allow-scripts allow-same-origin allow-pointer-lock"
     ></iframe>
   `;
 
   const frame = modalContent.querySelector('.game-player-frame');
   const status = modalContent.querySelector('#liveCasinoLobbyStatus');
-  frame.addEventListener('error', () => {
-    if (status) status.textContent = 'Canl\u0131 casino lobisi y\u00fcklenemedi. Daha sonra yeniden dene.';
-  }, { once: true });
+  try {
+    const launchUrl = await requestLiveGameLaunchUrl(game);
+    if (!frame.isConnected || !status.isConnected) return;
+    frame.src = launchUrl;
+    status.textContent = 'Masa Prismorar içinde açılıyor...';
+  } catch (error) {
+    if (status?.isConnected) status.textContent = `Masa açılamadı: ${error.message}`;
+    if (apiStatus) apiStatus.textContent = `${game.name} açılamadı: ${error.message}`;
+  }
 }
 
 if (providerShowcaseList) {

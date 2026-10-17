@@ -139,6 +139,115 @@ test('handles live casino catalog preflight and rejects unsupported methods', as
   assert.equal(unsupported.headers.get('Cache-Control'), 'no-store');
 });
 
+test('validates live casino launch requests and requires server credentials', async () => {
+  const invalid = await worker.fetch(
+    new Request('https://worker.example/api/live-casino/launch', {
+      method: 'POST',
+      headers: { Origin: origin, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game_id: 'not-a-game' }),
+    }),
+    {},
+  );
+  assert.equal(invalid.status, 400);
+
+  const missingCredentials = await worker.fetch(
+    new Request('https://worker.example/api/live-casino/launch', {
+      method: 'POST',
+      headers: {
+        Origin: origin,
+        'Content-Type': 'application/json',
+        'X-Provider-Token': 'attacker-token',
+        'X-Provider-Device': 'attacker-device',
+      },
+      body: JSON.stringify({ game_id: liveGameId }),
+    }),
+    {},
+  );
+  assert.equal(missingCredentials.status, 503);
+
+  const preflight = await worker.fetch(
+    new Request('https://worker.example/api/live-casino/launch', {
+      method: 'OPTIONS',
+      headers: { Origin: origin },
+    }),
+    {},
+  );
+  assert.equal(preflight.status, 204);
+  assert.equal(preflight.headers.get('Access-Control-Allow-Methods'), 'POST, OPTIONS');
+  assert.equal(preflight.headers.get('Access-Control-Allow-Headers'), 'Accept, Content-Type');
+});
+
+test('launches a live table through the authenticated provider API', async (context) => {
+  const originalFetch = globalThis.fetch;
+  let upstreamUrl;
+  let upstreamInit;
+  globalThis.fetch = async (input, init) => {
+    upstreamUrl = new URL(input);
+    upstreamInit = init;
+    return Response.json({
+      success: true,
+      data: { url: 'https://games.example/session/123' },
+    });
+  };
+  context.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  const response = await worker.fetch(
+    new Request('https://worker.example/api/live-casino/launch', {
+      method: 'POST',
+      headers: {
+        Origin: origin,
+        'Content-Type': 'application/json',
+        'X-Provider-Token': 'attacker-token',
+        'X-Provider-Device': 'attacker-device',
+      },
+      body: JSON.stringify({ game_id: liveGameId }),
+    }),
+    { MULTIWIN_API_TOKEN: 'server-secret', MULTIWIN_DEVICE_ID: 'server-device' },
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('Access-Control-Allow-Origin'), origin);
+  assert.equal(upstreamUrl.href, 'https://multiwin224.com/api/v1/games/launch');
+  assert.equal(upstreamInit.method, 'POST');
+  assert.equal(upstreamInit.redirect, 'manual');
+  assert.deepEqual(JSON.parse(upstreamInit.body), { game_id: liveGameId });
+  assert.equal(new Headers(upstreamInit.headers).get('Authorization'), 'Bearer server-secret');
+  assert.equal(new Headers(upstreamInit.headers).get('X-Device-Id'), 'server-device');
+  assert.deepEqual(await response.json(), {
+    success: true,
+    data: { url: 'https://games.example/session/123' },
+  });
+});
+
+test('rejects redirected and unsafe live game URLs', async (context) => {
+  const originalFetch = globalThis.fetch;
+  const credentials = { MULTIWIN_API_TOKEN: 'server-secret', MULTIWIN_DEVICE_ID: 'server-device' };
+  const request = () => new Request('https://worker.example/api/live-casino/launch', {
+    method: 'POST',
+    headers: { Origin: origin, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ game_id: liveGameId }),
+  });
+  context.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  globalThis.fetch = async () => new Response(null, {
+    status: 302,
+    headers: { Location: 'https://multiwin224.com/another-page' },
+  });
+  const redirected = await worker.fetch(request(), credentials);
+  assert.equal(redirected.status, 502);
+
+  globalThis.fetch = async () => Response.json({
+    success: true,
+    data: { url: 'http://games.example/session/123' },
+  });
+  const unsafeUrl = await worker.fetch(request(), credentials);
+  assert.equal(unsafeUrl.status, 502);
+});
+
 test('proxies the demo launch and returns the secure game URL', async (context) => {
   const originalFetch = globalThis.fetch;
   let upstreamUrl;

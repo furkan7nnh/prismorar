@@ -1,6 +1,7 @@
 const PROVIDER_API_URL = 'https://multiwin223.com/api/v1/games/launch-demo-mode/';
 const LIVE_CASINO_API_URL =
   'https://multiwin224.com/api/v2/games/pages/mirror/live_casino';
+const LIVE_GAME_LAUNCH_API_URL = 'https://multiwin224.com/api/v1/games/launch';
 const ALLOWED_ORIGINS = new Set([
   'https://prismorar.com',
   'https://www.prismorar.com',
@@ -20,8 +21,8 @@ function jsonResponse(body, status, origin) {
 
   if (origin && ALLOWED_ORIGINS.has(origin)) {
     headers.set('Access-Control-Allow-Origin', origin);
-    headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    headers.set('Access-Control-Allow-Headers', 'Accept');
+    headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    headers.set('Access-Control-Allow-Headers', 'Accept, Content-Type');
     headers.set('Vary', 'Origin');
   }
 
@@ -106,7 +107,7 @@ async function fetchProvider(url, headers) {
 }
 
 export default {
-  async fetch(request) {
+  async fetch(request, env = {}) {
     const url = new URL(request.url);
     if (url.pathname === '/health' && request.method === 'GET') {
       return jsonResponse({ status: 'ok' }, 200);
@@ -174,6 +175,139 @@ export default {
           origin,
         );
       }
+    }
+
+    if (url.pathname === '/api/live-casino/launch') {
+      if (request.method === 'OPTIONS') {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Accept, Content-Type',
+            'Access-Control-Max-Age': '86400',
+            'Vary': 'Origin',
+          },
+        });
+      }
+      if (request.method !== 'POST') {
+        return jsonResponse(
+          { success: false, message: 'Method not allowed.' },
+          405,
+          origin,
+        );
+      }
+
+      let payload;
+      try {
+        payload = await request.json();
+      } catch {
+        return jsonResponse(
+          { success: false, message: 'Geçersiz masa başlatma isteği.' },
+          400,
+          origin,
+        );
+      }
+      if (typeof payload?.game_id !== 'string' || !GAME_ID_PATTERN.test(payload.game_id)) {
+        return jsonResponse(
+          { success: false, message: 'Geçerli bir game_id gönderin.' },
+          400,
+          origin,
+        );
+      }
+
+      const token = env?.MULTIWIN_API_TOKEN;
+      const deviceId = env?.MULTIWIN_DEVICE_ID;
+      if (!token || !deviceId) {
+        return jsonResponse(
+          { success: false, message: 'Masa başlatma için sağlayıcı hesabı sunucuda yapılandırılmamış.' },
+          503,
+          origin,
+        );
+      }
+
+      let providerResponse;
+      try {
+        providerResponse = await fetch(LIVE_GAME_LAUNCH_API_URL, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'X-Device-Id': deviceId,
+            'X-Device-Type': 'desktop',
+            'Accept-Language': 'tr',
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Origin: 'https://multiwin224.com',
+            Referer: 'https://multiwin224.com/games/live_casino',
+          },
+          body: JSON.stringify({ game_id: payload.game_id }),
+          redirect: 'manual',
+          signal: AbortSignal.timeout(15000),
+        });
+      } catch (error) {
+        console.error('Live casino launch request failed:', error);
+        return jsonResponse(
+          { success: false, message: 'Masa sağlayıcısına şu anda bağlanılamıyor.' },
+          502,
+          origin,
+        );
+      }
+
+      if (providerResponse.status >= 300 && providerResponse.status < 400) {
+        return jsonResponse(
+          { success: false, message: 'Masa sağlayıcısı beklenmeyen bir yönlendirme yanıtı verdi.' },
+          502,
+          origin,
+        );
+      }
+
+      let providerPayload;
+      try {
+        providerPayload = await providerResponse.json();
+      } catch (error) {
+        console.error('Live casino launch returned invalid JSON:', error);
+        return jsonResponse(
+          { success: false, message: 'Masa sağlayıcısından geçersiz yanıt alındı.' },
+          502,
+          origin,
+        );
+      }
+
+      let gameUrl;
+      try {
+        gameUrl = new URL(providerPayload?.data?.url);
+      } catch {
+        gameUrl = null;
+      }
+      if (
+        !providerResponse.ok ||
+        providerPayload?.success !== true ||
+        gameUrl?.protocol !== 'https:' ||
+        gameUrl.username ||
+        gameUrl.password
+      ) {
+        const status = providerResponse.ok
+          ? 502
+          : providerResponse.status >= 500
+            ? 502
+            : providerResponse.status;
+        return jsonResponse(
+          {
+            success: false,
+            message: typeof providerPayload?.message === 'string'
+              ? providerPayload.message
+              : 'Masa sağlayıcı tarafından başlatılamadı.',
+          },
+          status,
+          origin,
+        );
+      }
+
+      return jsonResponse(
+        { success: true, data: { url: gameUrl.href } },
+        200,
+        origin,
+      );
     }
 
     const gameMatch = url.pathname.match(/^\/api\/game-launch\/([^/]+)$/);

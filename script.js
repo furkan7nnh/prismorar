@@ -616,7 +616,7 @@ function renderGames() {
     return `
       <article class="game-card">
         <div class="game-card-art">
-          <img class="game-art-image" src="${escapeHTML(imageSource)}" alt="${escapeHTML(game.name)} oyun görseli" data-game-id="${escapeHTML(game.id)}" loading="lazy" decoding="async">
+          <img class="game-art-image" src="${escapeHTML(imageSource)}" alt="${escapeHTML(game.name)} oyun görseli" data-game-id="${escapeHTML(game.id)}" loading="eager" decoding="async">
           <span class="tag">${escapeHTML(labelNames.get(game.labels.find((label) => label.slug !== 'all')?.slug) || 'Casino')}</span>
         </div>
         <div class="game-card-content">

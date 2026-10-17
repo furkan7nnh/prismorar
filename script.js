@@ -6,6 +6,7 @@ const liveCasinoGrid = document.getElementById('liveCasinoGrid');
 const liveCasinoStatus = document.getElementById('liveCasinoStatus');
 const liveCasinoSearch = document.getElementById('liveCasinoSearch');
 const loadMoreLiveCasinoButton = document.getElementById('loadMoreLiveCasino');
+const openLiveCasinoLobbyButton = document.getElementById('openLiveCasinoLobby');
 let liveCasinoGames = [];
 let visibleLiveCasinoCount = 24;
 const CATALOG_URL = new URL('catalog.json?v=7', document.baseURI);
@@ -426,12 +427,9 @@ function renderLiveCasinoCard(game) {
         <h3>${escapeHTML(game.name)}</h3>
         <div class="game-card-footer">
           <span class="source-game-id" title="Oyun kimliği">${escapeHTML(game.id)}</span>
-          <a
-            class="play-btn live-game-link"
-            href="${LIVE_CASINO_PAGE_URL}"
-            target="_blank"
-            rel="noopener noreferrer"
-          >Canlı casino sayfası ↗</a>
+          <button class="play-btn live-game-link" type="button" data-live-casino-open>
+            Lobide masalar&#305; a&#231;
+          </button>
         </div>
       </div>
     </article>
@@ -509,9 +507,52 @@ if (loadMoreLiveCasinoButton) {
 }
 
 if (liveCasinoGrid) {
+  liveCasinoGrid.addEventListener('click', (event) => {
+    if (!(event.target instanceof Element)) return;
+    if (!event.target.closest('[data-live-casino-open]')) return;
+    openLiveCasinoLobby();
+  });
+
   loadLiveCasinoGames().catch((error) => {
     console.error('Canlı casino masaları başlatılamadı.', error);
   });
+}
+
+if (openLiveCasinoLobbyButton) {
+  openLiveCasinoLobbyButton.addEventListener('click', openLiveCasinoLobby);
+}
+
+function openLiveCasinoLobby() {
+  if (!modal || !modalContent) return;
+
+  modal.classList.add('is-playing');
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden', 'false');
+  modalContent.innerHTML = `
+    <div class="game-player-toolbar">
+      <div>
+        <h3 id="modalTitle">Canl&#305; Casino Lobisi</h3>
+        <p id="liveCasinoLobbyStatus" role="status">Sa&#287;lay&#305;c&#305;n&#305;n lobisi y&#252;kleniyor...</p>
+      </div>
+    </div>
+    <iframe
+      class="game-player-frame"
+      src="${LIVE_CASINO_PAGE_URL}"
+      title="Canl&#305; casino masalar&#305;"
+      allow="autoplay; fullscreen; picture-in-picture"
+      allowfullscreen
+      referrerpolicy="strict-origin-when-cross-origin"
+    ></iframe>
+  `;
+
+  const frame = modalContent.querySelector('.game-player-frame');
+  const status = modalContent.querySelector('#liveCasinoLobbyStatus');
+  frame.addEventListener('load', () => {
+    if (status) status.textContent = 'Lobi a\u00e7\u0131ld\u0131. Oynayaca\u011f\u0131n masay\u0131 burada se\u00e7; sa\u011flay\u0131c\u0131 giri\u015fi gerekebilir.';
+  }, { once: true });
+  frame.addEventListener('error', () => {
+    if (status) status.textContent = 'Canl\u0131 casino lobisi y\u00fcklenemedi. Daha sonra yeniden dene.';
+  }, { once: true });
 }
 
 if (providerShowcaseList) {

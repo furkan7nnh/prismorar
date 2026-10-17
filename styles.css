@@ -1514,6 +1514,14 @@ input {
   white-space: nowrap;
 }
 
+.home-see-all-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+}
+
 .home-see-all span {
   font-size: 1.3rem;
 }

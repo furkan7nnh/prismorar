@@ -17,52 +17,6 @@ test('serves a health check', async () => {
   assert.deepEqual(await response.json(), { status: 'ok' });
 });
 
-test('proxies approved game covers without requiring a browser Origin header', async (context) => {
-  const originalFetch = globalThis.fetch;
-  let upstreamUrl;
-  let upstreamHeaders;
-  globalThis.fetch = async (input, init) => {
-    upstreamUrl = new URL(input);
-    upstreamHeaders = new Headers(init.headers);
-    return new Response(new Uint8Array([1, 2, 3]), {
-      headers: { 'Content-Type': 'image/avif' },
-    });
-  };
-  context.after(() => {
-    globalThis.fetch = originalFetch;
-  });
-
-  const source = new URL('https://multiwin223.com/storage/v3/games/images/cat-mansion.avif');
-  const url = new URL('https://worker.example/api/game-image');
-  url.searchParams.set('url', source.href);
-  const response = await worker.fetch(new Request(url));
-
-  assert.equal(response.status, 200);
-  assert.equal(response.headers.get('Content-Type'), 'image/avif');
-  assert.equal(response.headers.get('Cache-Control'), 'public, max-age=86400, s-maxage=604800');
-  assert.equal(response.headers.get('Cross-Origin-Resource-Policy'), 'cross-origin');
-  assert.equal(upstreamUrl.href, source.href);
-  assert.equal(upstreamHeaders.get('Origin'), source.origin);
-  assert.deepEqual([...new Uint8Array(await response.arrayBuffer())], [1, 2, 3]);
-});
-
-test('rejects unsupported game image URLs and methods without fetching', async () => {
-  const invalidUrl = new URL('https://worker.example/api/game-image');
-  invalidUrl.searchParams.set('url', 'https://attacker.example/storage/v3/games/images/file.avif');
-  const invalidResponse = await worker.fetch(new Request(invalidUrl));
-  assert.equal(invalidResponse.status, 400);
-
-  const invalidPath = new URL('https://worker.example/api/game-image');
-  invalidPath.searchParams.set('url', 'https://multiwin223.com/api/secret');
-  const pathResponse = await worker.fetch(new Request(invalidPath));
-  assert.equal(pathResponse.status, 400);
-
-  const methodResponse = await worker.fetch(
-    new Request('https://worker.example/api/game-image', { method: 'POST' }),
-  );
-  assert.equal(methodResponse.status, 405);
-});
-
 test('adds CORS headers only for Prismorar origins', async () => {
   const response = await worker.fetch(
     new Request('https://worker.example/api/game-launch/not-a-game', {

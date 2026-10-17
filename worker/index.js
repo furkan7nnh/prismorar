@@ -10,8 +10,6 @@ const GAME_ID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const CURRENCY_PATTERN = /^[A-Z]{3}$/;
 const PROVIDER_HOSTS = new Set(['multiwin223.com', 'multiwin224.com']);
-const GAME_IMAGE_PATH_PATTERN =
-  /^\/storage\/v3\/games\/images\/[a-z0-9/_-]+\.(?:avif|webp|png|jpe?g)$/i;
 const MAX_PROVIDER_REDIRECTS = 3;
 
 function jsonResponse(body, status, origin) {
@@ -37,87 +35,6 @@ function liveCasinoResponse(body, status, origin) {
     response.headers.set('Cache-Control', 'public, max-age=300');
   }
   return response;
-}
-
-function gameImageError(status, message) {
-  return new Response(message, {
-    status,
-    headers: {
-      'Cache-Control': 'no-store',
-      'Content-Type': 'text/plain; charset=utf-8',
-      'X-Content-Type-Options': 'nosniff',
-    },
-  });
-}
-
-async function proxyGameImage(request, requestUrl) {
-  if (request.method !== 'GET') {
-    return gameImageError(405, 'Method not allowed.');
-  }
-
-  let imageUrl;
-  try {
-    imageUrl = new URL(requestUrl.searchParams.get('url'));
-  } catch {
-    return gameImageError(400, 'Invalid game image URL.');
-  }
-
-  if (
-    imageUrl.protocol !== 'https:' ||
-    !PROVIDER_HOSTS.has(imageUrl.hostname) ||
-    (imageUrl.port && imageUrl.port !== '443') ||
-    imageUrl.username ||
-    imageUrl.password ||
-    imageUrl.search ||
-    imageUrl.hash ||
-    !GAME_IMAGE_PATH_PATTERN.test(imageUrl.pathname)
-  ) {
-    return gameImageError(400, 'Unsupported game image URL.');
-  }
-
-  let providerResponse;
-  try {
-    providerResponse = await fetch(imageUrl, {
-      headers: {
-        Accept: 'image/avif,image/webp,image/*',
-        Origin: imageUrl.origin,
-        Referer: `${imageUrl.origin}/`,
-      },
-      redirect: 'manual',
-      signal: AbortSignal.timeout(10000),
-    });
-  } catch (error) {
-    console.error('Game image request failed:', error);
-    return gameImageError(502, 'Game image provider is unavailable.');
-  }
-
-  if (providerResponse.status >= 300 && providerResponse.status < 400) {
-    return gameImageError(502, 'Game image provider returned an unexpected redirect.');
-  }
-  if (!providerResponse.ok) {
-    const status = providerResponse.status >= 500 ? 502 : providerResponse.status;
-    return gameImageError(status, 'Game image could not be loaded.');
-  }
-
-  const contentType = providerResponse.headers.get('Content-Type')?.split(';', 1)[0].trim().toLowerCase();
-  if (!contentType || !/^image\/(?:avif|webp|png|jpeg|gif)$/.test(contentType)) {
-    return gameImageError(502, 'Game image provider returned an unsupported file.');
-  }
-
-  const contentLength = Number(providerResponse.headers.get('Content-Length'));
-  if (Number.isFinite(contentLength) && contentLength > 5 * 1024 * 1024) {
-    return gameImageError(502, 'Game image exceeds the maximum allowed size.');
-  }
-
-  return new Response(providerResponse.body, {
-    status: 200,
-    headers: {
-      'Cache-Control': 'public, max-age=86400, s-maxage=604800',
-      'Content-Type': contentType,
-      'Cross-Origin-Resource-Policy': 'cross-origin',
-      'X-Content-Type-Options': 'nosniff',
-    },
-  });
 }
 
 function normalizeLiveGame(record) {
@@ -195,10 +112,6 @@ export default {
     if (url.pathname === '/health' && request.method === 'GET') {
       return jsonResponse({ status: 'ok' }, 200);
     }
-    if (url.pathname === '/api/game-image') {
-      return proxyGameImage(request, url);
-    }
-
     const origin = request.headers.get('Origin');
     if (!origin || !ALLOWED_ORIGINS.has(origin)) {
       return jsonResponse({ success: false, message: 'Origin is not allowed.' }, 403);

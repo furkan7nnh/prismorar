@@ -1,4 +1,4 @@
-const SOURCE_URL = 'https://multiwin223.com/';
+const SOURCE_URL = 'https://multiwin224.com/';
 const GAME_LAUNCH_PROXY_URL = 'https://prismorar-game-launch.mylocasyon.workers.dev/api/game-launch/';
 const LIVE_CASINO_API_URL = new URL('/api/live-casino', GAME_LAUNCH_PROXY_URL);
 const LIVE_GAME_LAUNCH_URL = new URL('/api/live-casino/launch', GAME_LAUNCH_PROXY_URL);
@@ -12,7 +12,6 @@ let visibleLiveCasinoCount = 24;
 const CATALOG_URL = new URL('catalog.json?v=8', document.baseURI);
 const CATALOG_CACHE_NAME = 'prismorar-catalog';
 const CATALOG_CACHE_VERSION = 1;
-const GAME_IMAGE_PROXY_URL = new URL('/api/game-image', GAME_LAUNCH_PROXY_URL);
 const EMPTY_LABELS = [];
 const EMPTY_CURRENCIES = [];
 const EMPTY_TAGS = [];
@@ -99,22 +98,6 @@ function getGameBatchSize() {
   return window.matchMedia('(max-width: 720px)').matches
     ? MOBILE_GAME_BATCH_SIZE
     : DESKTOP_GAME_BATCH_SIZE;
-}
-
-function getGameImageUrl(image) {
-  const sourceUrl = new URL(image, SOURCE_URL);
-  if (
-    sourceUrl.protocol !== 'https:' ||
-    !['multiwin223.com', 'multiwin224.com'].includes(sourceUrl.hostname) ||
-    (sourceUrl.port && sourceUrl.port !== '443') ||
-    !sourceUrl.pathname.startsWith('/storage/v3/games/images/')
-  ) {
-    throw new Error('Unsupported game image source.');
-  }
-
-  const proxyUrl = new URL(GAME_IMAGE_PROXY_URL);
-  proxyUrl.searchParams.set('url', sourceUrl.href);
-  return proxyUrl.href;
 }
 
 function escapeHTML(value) {
@@ -387,13 +370,13 @@ function renderFeaturedGames() {
       return;
     }
 
-    image.src = getGameImageUrl(game.image);
+    image.src = new URL(game.image, SOURCE_URL).href;
     image.alt = `${game.name} oyun görseli`;
   });
 }
 
 function renderGameCard(game) {
-  const imageSource = getGameImageUrl(game.image);
+  const imageSource = new URL(game.image, SOURCE_URL).href;
   const gameLabel = labelNames.get(game.labels.find((label) => label.slug !== 'all')?.slug) || 'Casino';
 
   return `
@@ -452,7 +435,7 @@ function renderLiveCasinoCard(game) {
       <div class="game-card-art">
         <img
           class="game-art-image"
-          src="${escapeHTML(getGameImageUrl(game.image))}"
+          src="${escapeHTML(game.image)}"
           alt="${escapeHTML(game.name)} masa görseli"
           loading="lazy"
           decoding="async"
@@ -628,7 +611,7 @@ function renderGames() {
   });
 
   gameGrid.innerHTML = visibleGames.map((game) => {
-    const imageSource = getGameImageUrl(game.image);
+    const imageSource = new URL(game.image, SOURCE_URL).href;
 
     return `
       <article class="game-card">

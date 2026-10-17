@@ -9,7 +9,7 @@ const loadMoreLiveCasinoButton = document.getElementById('loadMoreLiveCasino');
 const openLiveCasinoLobbyButton = document.getElementById('openLiveCasinoLobby');
 let liveCasinoGames = [];
 let visibleLiveCasinoCount = 24;
-const CATALOG_URL = new URL('catalog.json?v=7', document.baseURI);
+const CATALOG_URL = new URL('catalog.json?v=8', document.baseURI);
 const CATALOG_CACHE_NAME = 'prismorar-catalog';
 const CATALOG_CACHE_VERSION = 1;
 const EMPTY_LABELS = [];
@@ -120,8 +120,8 @@ function normalizeGame(record) {
   if (!record.id || !name || !record.provider_name) return null;
 
   const imagePath = record.custom_cover_image
-    || record.cover_image
     || record.custom_background_image
+    || record.cover_image
     || record.background_image;
 
   if (!imagePath) return null;

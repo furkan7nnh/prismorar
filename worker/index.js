@@ -43,8 +43,8 @@ function normalizeLiveGame(record) {
   const provider = record.provider_name;
   const image =
     record.custom_cover_image ||
-    record.cover_image ||
     record.custom_background_image ||
+    record.cover_image ||
     record.background_image;
 
   if (

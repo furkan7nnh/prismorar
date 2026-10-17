@@ -68,7 +68,8 @@ test('returns a filtered live casino catalog through the approved mirror endpoin
             custom_active: true,
             provider_is_active: true,
             is_test: false,
-            cover_image: '/storage/v3/games/images/blackjack.avif',
+            cover_image: '/storage/v3/games/images/placeholder.avif',
+            custom_background_image: '/storage/v3/games/images/blackjack.avif',
             active_players_count: 3,
           },
           {

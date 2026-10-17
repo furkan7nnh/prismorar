@@ -30,8 +30,8 @@ export function createCompactCatalog(data, updatedAt = new Date().toISOString())
       const currencies = Array.isArray(game.supported_currencies) ? game.supported_currencies : [];
       const currency = currencies.includes('USD') ? 'USD' : currencies[0] || '';
       const image = game.custom_cover_image ||
-        game.cover_image ||
         game.custom_background_image ||
+        game.cover_image ||
         game.background_image ||
         '';
 

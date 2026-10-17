@@ -136,6 +136,7 @@ test('handles live casino catalog preflight and rejects unsupported methods', as
     }),
   );
   assert.equal(unsupported.status, 405);
+  assert.equal(unsupported.headers.get('Cache-Control'), 'no-store');
 });
 
 test('proxies the demo launch and returns the secure game URL', async (context) => {

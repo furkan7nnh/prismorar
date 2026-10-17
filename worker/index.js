@@ -30,7 +30,9 @@ function jsonResponse(body, status, origin) {
 
 function liveCasinoResponse(body, status, origin) {
   const response = jsonResponse(body, status, origin);
-  response.headers.set('Cache-Control', 'public, max-age=300');
+  if (status === 200) {
+    response.headers.set('Cache-Control', 'public, max-age=300');
+  }
   return response;
 }
 

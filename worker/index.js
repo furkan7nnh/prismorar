@@ -1,4 +1,6 @@
 const PROVIDER_API_URL = 'https://multiwin223.com/api/v1/games/launch-demo-mode/';
+const LIVE_CASINO_API_URL =
+  'https://multiwin224.com/api/v2/games/pages/mirror/live_casino';
 const ALLOWED_ORIGINS = new Set([
   'https://prismorar.com',
   'https://www.prismorar.com',
@@ -24,6 +26,50 @@ function jsonResponse(body, status, origin) {
   }
 
   return new Response(JSON.stringify(body), { status, headers });
+}
+
+function liveCasinoResponse(body, status, origin) {
+  const response = jsonResponse(body, status, origin);
+  response.headers.set('Cache-Control', 'public, max-age=300');
+  return response;
+}
+
+function normalizeLiveGame(record) {
+  const id = record.game_id || record.id;
+  const name = record.custom_name || record.name;
+  const provider = record.provider_name;
+  const image =
+    record.custom_cover_image ||
+    record.cover_image ||
+    record.custom_background_image ||
+    record.background_image;
+
+  if (
+    record.type !== 'game' ||
+    record.available !== true ||
+    record.active === false ||
+    record.custom_active === false ||
+    record.provider_is_active === false ||
+    record.is_test === true ||
+    typeof id !== 'string' ||
+    !GAME_ID_PATTERN.test(id) ||
+    typeof name !== 'string' ||
+    typeof provider !== 'string' ||
+    typeof image !== 'string' ||
+    !image.startsWith('/storage/')
+  ) {
+    return null;
+  }
+
+  return {
+    id,
+    name,
+    provider,
+    image: `https://multiwin224.com${image}`,
+    activePlayers: Number.isSafeInteger(record.active_players_count)
+      ? record.active_players_count
+      : 0,
+  };
 }
 
 async function fetchProvider(url, headers) {
@@ -67,6 +113,65 @@ export default {
     const origin = request.headers.get('Origin');
     if (!origin || !ALLOWED_ORIGINS.has(origin)) {
       return jsonResponse({ success: false, message: 'Origin is not allowed.' }, 403);
+    }
+
+    if (url.pathname === '/api/live-casino') {
+      if (request.method === 'OPTIONS') {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Accept',
+            'Access-Control-Max-Age': '86400',
+            'Vary': 'Origin',
+          },
+        });
+      }
+      if (request.method !== 'GET') {
+        return liveCasinoResponse(
+          { success: false, message: 'Method not allowed.' },
+          405,
+          origin,
+        );
+      }
+
+      try {
+        const providerResponse = await fetchProvider(
+          new URL(LIVE_CASINO_API_URL),
+          {
+            Accept: 'application/json',
+            Origin: 'https://multiwin224.com',
+            Referer: 'https://multiwin224.com/games/live_casino',
+          },
+        );
+        if (!providerResponse?.ok) {
+          return liveCasinoResponse(
+            { success: false, message: 'Canlı oyun sağlayıcısından liste alınamadı.' },
+            502,
+            origin,
+          );
+        }
+
+        const payload = await providerResponse.json();
+        if (payload?.success === false || !Array.isArray(payload?.data?.games)) {
+          return liveCasinoResponse(
+            { success: false, message: 'Canlı oyun sağlayıcısından geçersiz liste alındı.' },
+            502,
+            origin,
+          );
+        }
+
+        const games = payload.data.games.map(normalizeLiveGame).filter(Boolean);
+        return liveCasinoResponse({ success: true, data: { games } }, 200, origin);
+      } catch (error) {
+        console.error('Live casino catalog request failed:', error);
+        return liveCasinoResponse(
+          { success: false, message: 'Canlı oyun sağlayıcısına şu anda bağlanılamıyor.' },
+          502,
+          origin,
+        );
+      }
     }
 
     const gameMatch = url.pathname.match(/^\/api\/game-launch\/([^/]+)$/);

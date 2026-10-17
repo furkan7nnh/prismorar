@@ -4,6 +4,7 @@ import worker from './index.js';
 
 const origin = 'https://prismorar.com';
 const gameId = '019f137d-ee0a-721c-a3f7-5f8588d15062';
+const liveGameId = '019f63d8-42d2-71d1-8315-21a14e284183';
 const launchRequest = (path = `/api/game-launch/${gameId}?currency=USD`, options = {}) =>
   new Request(`https://worker.example${path}`, {
     ...options,
@@ -43,6 +44,98 @@ test('handles CORS preflight without contacting the provider', async () => {
   assert.equal(response.status, 204);
   assert.equal(response.headers.get('Access-Control-Allow-Origin'), origin);
   assert.equal(response.headers.get('Access-Control-Allow-Methods'), 'GET, OPTIONS');
+});
+
+test('returns a filtered live casino catalog through the approved mirror endpoint', async (context) => {
+  const originalFetch = globalThis.fetch;
+  let upstreamUrl;
+  let upstreamHeaders;
+  globalThis.fetch = async (input, init) => {
+    upstreamUrl = new URL(input);
+    upstreamHeaders = new Headers(init.headers);
+    return Response.json({
+      success: true,
+      data: {
+        games: [
+          {
+            type: 'game',
+            game_id: liveGameId,
+            custom_name: 'Blackjack 1',
+            name: 'Blackjack',
+            provider_name: 'Ninja Gaming Live',
+            available: true,
+            active: true,
+            custom_active: true,
+            provider_is_active: true,
+            is_test: false,
+            cover_image: '/storage/v3/games/images/blackjack.avif',
+            active_players_count: 3,
+          },
+          {
+            type: 'game',
+            game_id: gameId,
+            name: 'Disabled table',
+            provider_name: 'Inactive provider',
+            available: false,
+            cover_image: '/storage/disabled.avif',
+          },
+          {
+            type: 'game',
+            game_id: gameId,
+            name: 'Unsafe image',
+            provider_name: 'Provider',
+            available: true,
+            cover_image: 'https://attacker.example/image.avif',
+          },
+        ],
+      },
+    });
+  };
+  context.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  const response = await worker.fetch(
+    new Request('https://worker.example/api/live-casino', {
+      headers: { Origin: origin },
+    }),
+  );
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('Access-Control-Allow-Origin'), origin);
+  assert.equal(response.headers.get('Cache-Control'), 'public, max-age=300');
+  assert.equal(upstreamUrl.href, 'https://multiwin224.com/api/v2/games/pages/mirror/live_casino');
+  assert.equal(upstreamHeaders.get('Referer'), 'https://multiwin224.com/games/live_casino');
+  assert.deepEqual(await response.json(), {
+    success: true,
+    data: {
+      games: [{
+        id: liveGameId,
+        name: 'Blackjack 1',
+        provider: 'Ninja Gaming Live',
+        image: 'https://multiwin224.com/storage/v3/games/images/blackjack.avif',
+        activePlayers: 3,
+      }],
+    },
+  });
+});
+
+test('handles live casino catalog preflight and rejects unsupported methods', async () => {
+  const preflight = await worker.fetch(
+    new Request('https://worker.example/api/live-casino', {
+      method: 'OPTIONS',
+      headers: { Origin: origin },
+    }),
+  );
+  assert.equal(preflight.status, 204);
+  assert.equal(preflight.headers.get('Access-Control-Allow-Origin'), origin);
+
+  const unsupported = await worker.fetch(
+    new Request('https://worker.example/api/live-casino', {
+      method: 'POST',
+      headers: { Origin: origin },
+    }),
+  );
+  assert.equal(unsupported.status, 405);
 });
 
 test('proxies the demo launch and returns the secure game URL', async (context) => {

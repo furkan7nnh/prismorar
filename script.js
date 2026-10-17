@@ -1,5 +1,13 @@
 const SOURCE_URL = 'https://multiwin223.com/';
 const GAME_LAUNCH_PROXY_URL = 'https://prismorar-game-launch.mylocasyon.workers.dev/api/game-launch/';
+const LIVE_CASINO_API_URL = new URL('/api/live-casino', GAME_LAUNCH_PROXY_URL);
+const LIVE_CASINO_PAGE_URL = 'https://multiwin224.com/games/live_casino';
+const liveCasinoGrid = document.getElementById('liveCasinoGrid');
+const liveCasinoStatus = document.getElementById('liveCasinoStatus');
+const liveCasinoSearch = document.getElementById('liveCasinoSearch');
+const loadMoreLiveCasinoButton = document.getElementById('loadMoreLiveCasino');
+let liveCasinoGames = [];
+let visibleLiveCasinoCount = 24;
 const CATALOG_URL = new URL('catalog.json?v=7', document.baseURI);
 const CATALOG_CACHE_NAME = 'prismorar-catalog';
 const CATALOG_CACHE_VERSION = 1;
@@ -389,6 +397,115 @@ function renderHomeShelves() {
       .slice(0, 12)
       .map(([provider, count]) => `
         <button class="provider-showcase-chip" type="button" data-provider="${escapeHTML(provider)}">
+function renderLiveCasinoCard(game) {
+  return `
+    <article class="game-card">
+      <div class="game-card-art">
+        <img
+          class="game-art-image"
+          src="${escapeHTML(game.image)}"
+          alt="${escapeHTML(game.name)} masa görseli"
+          loading="lazy"
+          decoding="async"
+        >
+        <span class="tag">Canlı masa</span>
+      </div>
+      <div class="game-card-content">
+        <div class="meta">
+          <span class="badge">${escapeHTML(game.provider)}</span>
+          <span class="badge">${game.activePlayers.toLocaleString('tr-TR')} aktif oyuncu</span>
+        </div>
+        <h3>${escapeHTML(game.name)}</h3>
+        <div class="game-card-footer">
+          <span class="source-game-id" title="Oyun kimliği">${escapeHTML(game.id)}</span>
+          <a
+            class="play-btn live-game-link"
+            href="${LIVE_CASINO_PAGE_URL}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Canlı casino sayfası ↗</a>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function renderLiveCasinoGames() {
+  if (!liveCasinoGrid || !liveCasinoStatus || !loadMoreLiveCasinoButton) return;
+
+  const searchTerm = liveCasinoSearch?.value.trim().toLocaleLowerCase('tr') || '';
+  const filteredGames = liveCasinoGames.filter((game) =>
+    game.name.toLocaleLowerCase('tr').includes(searchTerm)
+    || game.provider.toLocaleLowerCase('tr').includes(searchTerm)
+  );
+  const visibleGames = filteredGames.slice(0, visibleLiveCasinoCount);
+
+  liveCasinoGrid.innerHTML = visibleGames.map(renderLiveCasinoCard).join('');
+  if (!filteredGames.length) {
+    liveCasinoGrid.innerHTML = '<p class="empty-state">Aramana uygun canlı masa bulunamadı.</p>';
+  }
+
+  liveCasinoStatus.textContent = filteredGames.length === liveCasinoGames.length
+    ? `${filteredGames.length.toLocaleString('tr-TR')} canlı masa listelendi.`
+    : `${visibleGames.length.toLocaleString('tr-TR')} / ${filteredGames.length.toLocaleString('tr-TR')} canlı masa gösteriliyor.`;
+  loadMoreLiveCasinoButton.hidden = visibleGames.length >= filteredGames.length;
+  if (!loadMoreLiveCasinoButton.hidden) {
+    loadMoreLiveCasinoButton.textContent =
+      `Daha fazla canlı masa göster (${(filteredGames.length - visibleGames.length).toLocaleString('tr-TR')} kaldı)`;
+  }
+}
+
+async function loadLiveCasinoGames() {
+  if (!liveCasinoGrid || !liveCasinoStatus) return;
+
+  try {
+    const response = await fetch(LIVE_CASINO_API_URL, {
+      headers: { Accept: 'application/json' },
+      cache: 'no-cache',
+      credentials: 'omit',
+    });
+    const payload = await response.json();
+    if (!response.ok || payload?.success !== true || !Array.isArray(payload?.data?.games)) {
+      throw new Error(payload?.message || `Canlı masalar yüklenemedi (HTTP ${response.status}).`);
+    }
+
+    liveCasinoGames = payload.data.games.filter((game) =>
+      typeof game.id === 'string'
+      && typeof game.name === 'string'
+      && typeof game.provider === 'string'
+      && typeof game.image === 'string'
+      && new URL(game.image).origin === 'https://multiwin224.com'
+      && Number.isSafeInteger(game.activePlayers)
+    );
+    renderLiveCasinoGames();
+  } catch (error) {
+    console.error('Canlı casino masaları yüklenemedi.', error);
+    liveCasinoStatus.textContent = `Canlı masalar yüklenemedi: ${error.message}`;
+    liveCasinoGrid.innerHTML =
+      '<p class="api-error">Canlı masa listesine şu anda erişilemiyor. Biraz sonra yeniden dene.</p>';
+  }
+}
+
+if (liveCasinoSearch) {
+  liveCasinoSearch.addEventListener('input', () => {
+    visibleLiveCasinoCount = 24;
+    renderLiveCasinoGames();
+  });
+}
+
+if (loadMoreLiveCasinoButton) {
+  loadMoreLiveCasinoButton.addEventListener('click', () => {
+    visibleLiveCasinoCount += 24;
+    renderLiveCasinoGames();
+  });
+}
+
+if (liveCasinoGrid) {
+  loadLiveCasinoGames().catch((error) => {
+    console.error('Canlı casino masaları başlatılamadı.', error);
+  });
+}
+
           <span class="provider-showcase-mark">${escapeHTML(provider.slice(0, 1).toLocaleUpperCase('tr'))}</span>
           <span>${escapeHTML(provider)}</span>
           <small>${count.toLocaleString('tr-TR')} oyun</small>

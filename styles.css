@@ -1924,6 +1924,30 @@ input {
   font-weight: 700;
 }
 
+.live-game-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.live-casino-toolbar {
+  justify-content: flex-start;
+  margin: 0 0 18px;
+}
+
+.live-casino-toolbar input {
+  width: min(360px, 100%);
+}
+
+.live-casino-notice {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
 .modal {
   position: fixed;
   inset: 0;

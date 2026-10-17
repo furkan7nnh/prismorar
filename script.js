@@ -1,10 +1,8 @@
 const SOURCE_URL = 'https://multiwin223.com/';
-const API_URL = new URL('/api/v2/games/pages/mirror/casino', SOURCE_URL);
 const GAME_LAUNCH_API_URL = new URL('/api/v1/games/launch-demo-mode/', SOURCE_URL);
-const CATALOG_URL = new URL('catalog.json?v=6', document.baseURI);
+const CATALOG_URL = new URL('catalog.json?v=7', document.baseURI);
 const CATALOG_CACHE_NAME = 'prismorar-catalog';
 const CATALOG_CACHE_VERSION = 1;
-const CATALOG_REFRESH_INTERVAL = 4 * 60 * 60 * 1000;
 const EMPTY_LABELS = [];
 const EMPTY_CURRENCIES = [];
 const EMPTY_TAGS = [];
@@ -203,62 +201,6 @@ async function writeCatalogCache(data) {
   } finally {
     if (database) database.close();
   }
-}
-
-function createCatalogData(data) {
-  if (!Array.isArray(data?.games)) {
-    throw new Error('Yanıt içinde oyun listesi bulunamadı.');
-  }
-
-  return {
-    updatedAt: new Date().toISOString(),
-    providers: (data.providers || []).map((provider) => ({ name: provider.name })),
-    labels: (data.labels || [])
-      .filter((label) => label.slug !== 'all')
-      .map(({ slug, name, position, order }) => ({
-        slug,
-        name: getLocalizedName(name),
-        position,
-        order
-      })),
-    games: data.games
-      .filter((record) => record.active && record.available && record.provider_is_active && record.demo_mode_supported === true)
-      .map((record) => {
-        const currencies = Array.isArray(record.supported_currencies)
-          ? record.supported_currencies
-          : EMPTY_CURRENCIES;
-        const currency = currencies.includes('USD') ? 'USD' : currencies[0];
-        return {
-          id: record.id,
-          name: record.custom_name || record.name,
-          provider_name: record.provider_name,
-          cover_image: record.custom_cover_image
-            || record.cover_image
-            || record.custom_background_image
-            || record.background_image
-            || '',
-          demo_mode_supported: true,
-          supported_currencies: currency ? [currency] : [],
-          labels: (record.labels || [])
-            .filter((label) => label.slug !== 'all')
-            .map(({ slug }) => slug),
-          tags: Array.isArray(record.tags)
-            ? record.tags.filter((tag) => GAME_TAG_LABELS.has(tag))
-            : EMPTY_TAGS
-        };
-      })
-      .filter((record) => record.id && record.name && record.provider_name && record.cover_image)
-  };
-}
-
-async function fetchLiveCatalog() {
-  const response = await fetch(API_URL, {
-    headers: { Accept: 'application/json' },
-    credentials: 'omit'
-  });
-  if (!response.ok) throw new Error(`İstek başarısız: HTTP ${response.status}`);
-  const payload = await response.json();
-  return createCatalogData(payload?.data);
 }
 
 async function requestGameLaunchUrl(game) {
@@ -592,58 +534,37 @@ function displayCatalog(data) {
   renderGames();
 }
 
-function scheduleLiveRefresh() {
-  const refresh = async () => {
-    try {
-      const data = await fetchLiveCatalog();
-      displayCatalog(data);
-      await writeCatalogCache(data);
-    } catch (error) {
-      console.error('Canlı katalog güncellenemedi.', error);
-      apiStatus.textContent = 'Kayıtlı oyun listesi gösteriliyor; canlı katalog güncellenemedi.';
-    }
-  };
-
-  if ('requestIdleCallback' in window) {
-    window.requestIdleCallback(refresh, { timeout: 8000 });
-  } else {
-    window.setTimeout(refresh, 3000);
-  }
-}
-
 async function loadGames() {
-  apiStatus.textContent = 'Katalog yükleniyor...';
+  apiStatus.textContent = 'Katalog y\u00fckleniyor...';
 
-  let initialData = await readCatalogCache();
-  const loadedFromCache = Array.isArray(initialData?.games);
-  if (!Array.isArray(initialData?.games)) {
-    try {
-      const response = await fetch(CATALOG_URL);
-      if (!response.ok) throw new Error(`Katalog dosyası yüklenemedi (HTTP ${response.status}).`);
-      initialData = decodeCatalog(await response.json());
-    } catch (error) {
-      console.warn('Hazır katalog dosyası kullanılamadı; canlı katalog deneniyor.', error);
-    }
-  }
-
-  if (Array.isArray(initialData?.games)) {
-    displayCatalog(initialData);
-    if (!loadedFromCache) await writeCatalogCache(initialData);
-    const updatedAt = Date.parse(initialData.updatedAt);
-    if (!Number.isFinite(updatedAt) || Date.now() - updatedAt >= CATALOG_REFRESH_INTERVAL) {
-      scheduleLiveRefresh();
-    }
-    return;
+  const cachedData = await readCatalogCache();
+  if (Array.isArray(cachedData?.games) && cachedData.games.length > 0) {
+    displayCatalog(cachedData);
   }
 
   try {
-    const data = await fetchLiveCatalog();
+    const response = await fetch(CATALOG_URL, { cache: 'no-cache' });
+    if (!response.ok) throw new Error(`Katalog dosyas\u0131 y\u00fcklenemedi (HTTP ${response.status}).`);
+    const data = decodeCatalog(await response.json());
+    if (!Array.isArray(data?.games) || data.games.length === 0) {
+      throw new Error('Katalog dosyas\u0131nda oyun bulunamad\u0131.');
+    }
+
     displayCatalog(data);
     await writeCatalogCache(data);
+    const updatedAt = Date.parse(data.updatedAt);
+    apiStatus.textContent = Number.isFinite(updatedAt)
+      ? `Oyun katalo\u011fu g\u00fcncel (${new Date(updatedAt).toLocaleDateString('tr-TR')}).`
+      : 'Oyun katalo\u011fu y\u00fcklendi.';
   } catch (error) {
-    apiStatus.textContent = `Oyun listesi yüklenemedi: ${error.message}`;
-    gameGrid.innerHTML = '<p class="api-error">Oyun listesine erişilemedi. Sayfayı yenileyerek tekrar deneyebilirsin.</p>';
-    throw error;
+    console.error('Oyun katalo\u011fu y\u00fcklenemedi.', error);
+    if (Array.isArray(cachedData?.games) && cachedData.games.length > 0) {
+      apiStatus.textContent = `Kay\u0131tl\u0131 oyun listesi g\u00f6steriliyor; g\u00fcncel katalog al\u0131namad\u0131: ${error.message}`;
+      return;
+    }
+
+    apiStatus.textContent = `Oyun listesi y\u00fcklenemedi: ${error.message}`;
+    gameGrid.innerHTML = '<p class="api-error">Oyun listesine eri\u015filemedi. Ba\u011flant\u0131n\u0131 kontrol edip sayfay\u0131 yenileyebilirsin.</p>';
   }
 }
 

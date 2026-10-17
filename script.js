@@ -397,6 +397,14 @@ function renderHomeShelves() {
       .slice(0, 12)
       .map(([provider, count]) => `
         <button class="provider-showcase-chip" type="button" data-provider="${escapeHTML(provider)}">
+          <span class="provider-showcase-mark">${escapeHTML(provider.slice(0, 1).toLocaleUpperCase('tr'))}</span>
+          <span>${escapeHTML(provider)}</span>
+          <small>${count.toLocaleString('tr-TR')} oyun</small>
+        </button>
+      `).join('');
+  }
+}
+
 function renderLiveCasinoCard(game) {
   return `
     <article class="game-card">
@@ -504,14 +512,6 @@ if (liveCasinoGrid) {
   loadLiveCasinoGames().catch((error) => {
     console.error('Canlı casino masaları başlatılamadı.', error);
   });
-}
-
-          <span class="provider-showcase-mark">${escapeHTML(provider.slice(0, 1).toLocaleUpperCase('tr'))}</span>
-          <span>${escapeHTML(provider)}</span>
-          <small>${count.toLocaleString('tr-TR')} oyun</small>
-        </button>
-      `).join('');
-  }
 }
 
 if (providerShowcaseList) {

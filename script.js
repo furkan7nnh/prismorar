@@ -683,10 +683,18 @@ function openGamePlayer(gameId) {
   `;
 
   const frame = modalContent.querySelector('.game-player-frame');
-  frame.addEventListener('load', () => {
+  const handleFrameLoad = () => {
+    try {
+      if (frame.contentWindow.location.href === 'about:blank') return;
+    } catch {
+      // Cross-origin navigation is expected after the provider URL loads.
+    }
+
+    frame.removeEventListener('load', handleFrameLoad);
     const status = modalContent.querySelector('#playerStatus');
-    if (status) status.textContent = 'Oyun açıldı.';
-  }, { once: true });
+    if (status) status.textContent = 'Oyun sağlayıcı sayfası yüklendi; oyunun çalıştığı doğrulanamıyor.';
+  };
+  frame.addEventListener('load', handleFrameLoad);
   apiStatus.textContent = `${game.name} açılıyor...`;
   requestGameLaunchUrl(game)
     .then((launchUrl) => {

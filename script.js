@@ -532,7 +532,7 @@ function openLiveCasinoLobby() {
     <div class="game-player-toolbar">
       <div>
         <h3 id="modalTitle">Canl&#305; Casino Lobisi</h3>
-        <p id="liveCasinoLobbyStatus" role="status">Sa&#287;lay&#305;c&#305;n&#305;n lobisi y&#252;kleniyor...</p>
+        <p id="liveCasinoLobbyStatus" role="status">Lobi bu pencerede açılır. Oynamak için sağlayıcı hesabıyla giriş gerekebilir.</p>
       </div>
     </div>
     <iframe
@@ -547,9 +547,6 @@ function openLiveCasinoLobby() {
 
   const frame = modalContent.querySelector('.game-player-frame');
   const status = modalContent.querySelector('#liveCasinoLobbyStatus');
-  frame.addEventListener('load', () => {
-    if (status) status.textContent = 'Lobi a\u00e7\u0131ld\u0131. Oynayaca\u011f\u0131n masay\u0131 burada se\u00e7; sa\u011flay\u0131c\u0131 giri\u015fi gerekebilir.';
-  }, { once: true });
   frame.addEventListener('error', () => {
     if (status) status.textContent = 'Canl\u0131 casino lobisi y\u00fcklenemedi. Daha sonra yeniden dene.';
   }, { once: true });

@@ -542,6 +542,7 @@ function openLiveCasinoLobby() {
       allow="autoplay; fullscreen; picture-in-picture"
       allowfullscreen
       referrerpolicy="strict-origin-when-cross-origin"
+      sandbox="allow-forms allow-scripts allow-same-origin allow-pointer-lock"
     ></iframe>
   `;
 
@@ -641,7 +642,8 @@ function openGamePlayer(gameId) {
       title="${escapeHTML(game.name)} oyunu"
       allow="autoplay; fullscreen; gamepad"
       allowfullscreen
-      referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      referrerpolicy="strict-origin-when-cross-origin"
+      sandbox="allow-forms allow-scripts allow-same-origin allow-pointer-lock"></iframe>
   `;
 
   const frame = modalContent.querySelector('.game-player-frame');

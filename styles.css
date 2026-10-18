@@ -2373,6 +2373,87 @@ input {
   display: none !important;
 }
 
+html:not(.home-password-unlocked) .page-shell,
+html:not(.home-password-unlocked) .mobile-home-dock,
+html:not(.home-password-unlocked) #gameModal {
+  display: none !important;
+}
+
+.home-password-gate {
+  position: fixed;
+  z-index: 10000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top, rgba(107, 124, 255, 0.22), transparent 38%),
+    linear-gradient(180deg, #030b13, #07111f 55%, #090e19);
+}
+
+.home-password-gate[hidden] {
+  display: none;
+}
+
+.home-password-card {
+  width: min(100%, 410px);
+  padding: 36px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.home-password-card > .brand-mark {
+  margin-bottom: 24px;
+}
+
+.home-password-card h1 {
+  margin: 0 0 8px;
+  font-size: clamp(1.8rem, 8vw, 2.3rem);
+}
+
+.home-password-card > p:not(.eyebrow) {
+  margin: 0 0 26px;
+  color: var(--muted);
+}
+
+.home-password-card label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.home-password-card input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  outline: none;
+  background: rgba(3, 11, 19, 0.78);
+  color: var(--text);
+}
+
+.home-password-card input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(107, 124, 255, 0.2);
+}
+
+.home-password-card button {
+  width: 100%;
+  margin-top: 14px;
+}
+
+.home-password-status {
+  min-height: 1.25em;
+  margin: 12px 0 0;
+  color: var(--danger);
+  font-size: 0.85rem;
+}
+
 @media (max-width: 980px) {
   .hero {
     grid-template-columns: 1fr;

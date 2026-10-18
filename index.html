@@ -12,6 +12,21 @@
     <link rel="stylesheet" href="styles.css?v=18" />
   </head>
   <body>
+    <section id="home-password-gate" class="home-password-gate" aria-labelledby="homePasswordTitle">
+      <div class="home-password-card">
+        <div class="brand-mark" aria-hidden="true">AI</div>
+        <p class="eyebrow alt">Oyun Merkezi</p>
+        <h1 id="homePasswordTitle">Hoş geldiniz</h1>
+        <p>Devam etmek için site şifresini girin.</p>
+        <form id="homePasswordForm">
+          <label for="homePasswordInput">Şifre</label>
+          <input id="homePasswordInput" name="password" type="password" autocomplete="current-password" required autofocus />
+          <button class="primary-btn" type="submit">Devam et</button>
+          <p id="homePasswordStatus" class="home-password-status" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
     <div class="page-shell">
       <header class="topbar">
         <div class="brand-wrap">
@@ -254,6 +269,38 @@
       </div>
     </div>
 
-    <script src="script.js?v=26"></script>
+    <script>
+      (() => {
+        const gate = document.querySelector('#home-password-gate');
+        const form = document.querySelector('#homePasswordForm');
+        const passwordInput = document.querySelector('#homePasswordInput');
+        const status = document.querySelector('#homePasswordStatus');
+
+        function unlockHome() {
+          document.documentElement.classList.add('home-password-unlocked');
+          gate.hidden = true;
+          const appScript = document.createElement('script');
+          appScript.src = 'script.js?v=26';
+          document.body.append(appScript);
+        }
+
+        if (sessionStorage.getItem('prismorar-home-unlocked') === 'true') {
+          unlockHome();
+          return;
+        }
+
+        form.addEventListener('submit', (event) => {
+          event.preventDefault();
+          if (passwordInput.value !== 'FURKAN75_1') {
+            status.textContent = 'Şifre yanlış. Tekrar deneyin.';
+            passwordInput.select();
+            return;
+          }
+
+          sessionStorage.setItem('prismorar-home-unlocked', 'true');
+          unlockHome();
+        });
+      })();
+    </script>
   </body>
 </html>

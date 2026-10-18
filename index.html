@@ -280,7 +280,7 @@
           document.documentElement.classList.add('home-password-unlocked');
           gate.hidden = true;
           const appScript = document.createElement('script');
-          appScript.src = 'script.js?v=27';
+          appScript.src = 'script.js?v=28';
           document.body.append(appScript);
         }
 
@@ -291,7 +291,7 @@
 
         form.addEventListener('submit', (event) => {
           event.preventDefault();
-          if (passwordInput.value !== 'Furkan75_1') {
+          if (passwordInput.value.trim().toLowerCase() !== 'furkan75_1') {
             status.textContent = 'Şifre yanlış. Tekrar deneyin.';
             passwordInput.select();
             return;

@@ -1,5 +1,6 @@
 const SOURCE_URL = 'https://multiwin224.com/';
 const GAME_LAUNCH_PROXY_URL = 'https://prismorar-game-launch.mylocasyon.workers.dev/api/game-launch/';
+const GAME_LAUNCH_API_URL = new URL('/api/v1/games/launch-demo-mode/', SOURCE_URL);
 const LIVE_CASINO_API_URL = new URL('/api/live-casino', GAME_LAUNCH_PROXY_URL);
 const LIVE_GAME_LAUNCH_URL = new URL('/api/live-casino/launch', GAME_LAUNCH_PROXY_URL);
 const liveCasinoGrid = document.getElementById('liveCasinoGrid');
@@ -217,7 +218,7 @@ async function requestGameLaunchUrl(game) {
     throw new Error('Bu oyun için erişim uygun değil.');
   }
 
-  const launchUrl = new URL(encodeURIComponent(game.id), GAME_LAUNCH_PROXY_URL);
+  const launchUrl = new URL(encodeURIComponent(game.id), GAME_LAUNCH_API_URL);
   const currency = game.supportedCurrencies.includes('USD')
     ? 'USD'
     : game.supportedCurrencies[0];

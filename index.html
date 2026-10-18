@@ -280,24 +280,24 @@
           document.documentElement.classList.add('home-password-unlocked');
           gate.hidden = true;
           const appScript = document.createElement('script');
-          appScript.src = 'script.js?v=26';
+          appScript.src = 'script.js?v=27';
           document.body.append(appScript);
         }
 
-        if (sessionStorage.getItem('prismorar-home-unlocked') === 'true') {
+        if (sessionStorage.getItem('prismorar-home-unlocked-v2') === 'true') {
           unlockHome();
           return;
         }
 
         form.addEventListener('submit', (event) => {
           event.preventDefault();
-          if (passwordInput.value !== 'FURKAN75_1') {
+          if (passwordInput.value !== 'Furkan75_1') {
             status.textContent = 'Şifre yanlış. Tekrar deneyin.';
             passwordInput.select();
             return;
           }
 
-          sessionStorage.setItem('prismorar-home-unlocked', 'true');
+          sessionStorage.setItem('prismorar-home-unlocked-v2', 'true');
           unlockHome();
         });
       })();

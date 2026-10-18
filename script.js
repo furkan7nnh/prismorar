@@ -663,50 +663,25 @@ function openGamePlayer(gameId) {
   const game = games.find((item) => item.id === gameId);
   if (!game) return;
 
-  modal.classList.add('is-playing');
-  modal.classList.remove('hidden');
-  modal.setAttribute('aria-hidden', 'false');
-  modalContent.innerHTML = `
-    <div class="game-player-toolbar">
-      <div>
-        <h3 id="modalTitle">${escapeHTML(game.name)}</h3>
-        <p id="playerStatus" role="status">Oyun açılıyor...</p>
-      </div>
-    </div>
-    <iframe
-      class="game-player-frame"
-      src="about:blank"
-      title="${escapeHTML(game.name)} oyunu"
-      allow="autoplay; fullscreen; gamepad"
-      allowfullscreen
-      referrerpolicy="strict-origin-when-cross-origin"
-      sandbox="allow-forms allow-scripts allow-same-origin allow-pointer-lock"></iframe>
-  `;
-
-  const frame = modalContent.querySelector('.game-player-frame');
-  const handleFrameLoad = () => {
-    try {
-      if (frame.contentWindow.location.href === 'about:blank') return;
-    } catch {
-      // Cross-origin navigation is expected after the provider URL loads.
-    }
-
-    frame.removeEventListener('load', handleFrameLoad);
-    const status = modalContent.querySelector('#playerStatus');
-    if (status) status.textContent = 'Oyun sağlayıcı sayfası yüklendi; oyunun çalıştığı doğrulanamıyor.';
-  };
-  frame.addEventListener('load', handleFrameLoad);
+  const gameWindow = window.open('about:blank', '_blank');
+  if (gameWindow) {
+    gameWindow.opener = null;
+    gameWindow.document.title = `${game.name} yükleniyor...`;
+    gameWindow.document.body.textContent = 'Oyun yükleniyor...';
+  }
   apiStatus.textContent = `${game.name} açılıyor...`;
   requestGameLaunchUrl(game)
     .then((launchUrl) => {
-      frame.src = launchUrl;
-      const status = modalContent.querySelector('#playerStatus');
-      if (status) status.textContent = 'Oyun yükleniyor...';
+      if (!gameWindow || gameWindow.closed) {
+        apiStatus.textContent = `${game.name} açılamadı: Tarayıcı yeni sekmeyi engelledi. Bu site için açılır pencerelere izin verip tekrar deneyin.`;
+        return;
+      }
+
+      gameWindow.location.replace(launchUrl);
+      apiStatus.textContent = `${game.name} yeni sekmede açıldı.`;
     })
     .catch((error) => {
-      frame.remove();
-      const status = modalContent.querySelector('#playerStatus');
-      if (status) status.textContent = `Oyun açılamadı: ${error.message}`;
+      if (gameWindow && !gameWindow.closed) gameWindow.close();
       apiStatus.textContent = `${game.name} açılamadı: ${error.message}`;
     });
 }
